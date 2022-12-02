@@ -2,7 +2,12 @@
   "name": "toot-feed-bot",
   "version": "1.0.4",
   "description": "A bot that forwards toots from your Fediverse feed to your matrix inbox. ",
-  "keywords": ["mastodon", "pleroma", "misskey", "matrix"],
+  "keywords": [
+    "mastodon",
+    "pleroma",
+    "misskey",
+    "matrix"
+  ],
   "author": {
     "name": "Bogdan Kolbik",
     "url": "https://urmaul.com"
@@ -46,7 +51,7 @@
     "cz-conventional-changelog": "^3.0.2",
     "eslint": "^8.2.0",
     "mocha": "^10.0.0",
-    "nyc": "^15.0.0",
+    "nyc": "^15.1.0",
     "source-map-support": "^0.5.12",
     "ts-node": "^10.0.0",
     "typescript": "^4.0.3"
