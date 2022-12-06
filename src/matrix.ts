@@ -14,7 +14,12 @@ export interface MatrixConfig {
     fsStoragePath: string;
 }
 
-export function initMatrixBot(config: MatrixConfig): MatrixClient {
+export interface MatrixController {
+    reg: () => Promise<string>;
+    auth: (code: string) => Promise<string>;
+}
+
+export function initMatrixBot(config: MatrixConfig, controller: MatrixController): MatrixClient {
 	// We'll want to make sure the bot doesn't have to do an initial sync every
 	// time it restarts, so we need to prepare a storage provider. Here we use
 	// a simple JSON database.
@@ -32,12 +37,11 @@ export function initMatrixBot(config: MatrixConfig): MatrixClient {
 
 	// Now that the client is all set up and the event handler is registered, start the
 	// client up. This will start it syncing.
-	matrix.start().then(() => console.log('Client started!'));
-	matrix.dms.update().then(() => console.log('Updated dms'));
+	matrix.start().then(() => logger.info('Matrix client started!'));
 
 	// This is our event handler for dealing with the `!hello` command.
 	async function handleCommand(roomId, event) {
-		logger.info(`${roomId} ${JSON.stringify(event)}`)
+		logger.debug(`${roomId} ${JSON.stringify(event)}`)
 
 		// Don't handle events that don't have contents (they were probably redacted)
 		if (!event['content']) return;
@@ -51,18 +55,27 @@ export function initMatrixBot(config: MatrixConfig): MatrixClient {
 
 		// Make sure that the event looks like a command we're expecting
 		const body = event['content']['body'];
-		if (!body || !body.startsWith('!hello')) return;
+		if (!body) return;
 
-		// If we've reached this point, we can safely execute the command. We'll
-		// send a reply to the user's command saying "Hello World!".
-		const replyBody = 'Hello World!'; // we don't have any special styling to do.
-		const reply = RichReply.createFor(roomId, event, replyBody, replyBody);
-		reply['msgtype'] = 'm.notice';
-		matrix.sendMessage(roomId, reply);
+		if (body.startsWith('!reg')) {
+			const replyBody = await controller.reg();
+			logger.debug(`Replying with ${replyBody}`);
+			const reply = RichReply.createFor(roomId, event, replyBody, replyBody);
+			reply['msgtype'] = 'm.notice';
+			matrix.sendMessage(roomId, reply);
+			return;
+		}
+
+		if (body.startsWith('!auth')) {
+			const code = body.replace(/!auth +/, '')
+			const replyBody = await controller.auth(code);
+			logger.debug(`Replying with ${replyBody}`);
+			const reply = RichReply.createFor(roomId, event, replyBody, replyBody);
+			reply['msgtype'] = 'm.notice';
+			matrix.sendMessage(roomId, reply);
+			return;
+		}
 	}
-
-	// const roomId = process.env.MATRIX_ROOM_ID || ''
-	// matrix.sendText(roomId, 'I am a robot');
 
 	return matrix;
 }

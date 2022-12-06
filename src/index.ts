@@ -17,23 +17,6 @@ logger.debug('Got source config', sourceConfig);
 // TODO: don't assume client type
 const source = initPleromaClient(sourceConfig);
 
-source.client.generateAuthUrl(source.config.clientId, source.config.clientSecret, {scope: ['read']})
-	.then(url => logger.debug('Got url', url))
-
-// TODO: accept auth code
-
-// ----- Matrix bot
-
-const matrixConfig: MatrixConfig = {
-	serverUrl: 'https://matrix.org',
-	accessToken: process.env.MATRIX_ACCESS_TOKEN || '',
-	fsStoragePath: './data/matrix-bot.json',
-}
-
-logger.debug('Got matrix config', matrixConfig)
-
-initMatrixBot(matrixConfig);
-
 // --- Subscription
 
 const subscription: Subscription = {
@@ -42,3 +25,30 @@ const subscription: Subscription = {
 };
 
 logger.debug('Got subscription data', subscription);
+
+// ----- Matrix bot
+
+const matrixConfig: MatrixConfig = {
+	serverUrl: process.env.MATRIX_SERVER_URL || '',
+	accessToken: process.env.MATRIX_ACCESS_TOKEN || '',
+	fsStoragePath: './data/matrix-bot.json',
+}
+
+logger.debug('Got matrix config', matrixConfig)
+
+initMatrixBot(matrixConfig, {
+	reg: () => {
+		return source.client.generateAuthUrl(
+			source.config.clientId,
+			source.config.clientSecret,
+			{scope: ['read']}
+		)
+	},
+	auth: (code: string) => {
+		return source.client.fetchAccessToken(
+			source.config.clientId,
+			source.config.clientSecret,
+			code
+		).then(JSON.stringify)
+	}
+});
