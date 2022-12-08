@@ -1,4 +1,5 @@
-import { Logger } from 'sitka';
+import { $log } from '@tsed/logger';
 
-// TODO: use app name
-export const logger = Logger.getLogger('MyLogger');
+$log.name = process.env.APP_NAME || 'TootFeedBot';
+
+export const logger = $log;

@@ -52,7 +52,7 @@
     "eslint": "^8.28.0",
     "mocha": "^10.1.0",
     "nyc": "^15.1.0",
-    "source-map-support": "^0.5.12",
+    "source-map-support": "^0.5.21",
     "ts-node": "^10.0.0",
     "typescript": "^4.9.4"
   },
@@ -62,8 +62,8 @@
     }
   },
   "dependencies": {
+    "@tsed/logger": "^6.3.3",
     "matrix-bot-sdk": "^0.6.2",
-    "megalodon": "^4.1.3",
-    "sitka": "^1.0.5"
+    "megalodon": "^4.1.3"
   }
 }
