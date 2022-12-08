@@ -4,6 +4,7 @@ import { initPleromaClient, SourceConfig } from './source';
 import { initMatrixBot, MatrixConfig } from './matrix';
 import { logger } from './logger';
 import { Subscription } from './subscription';
+import { renderMessage } from './render';
 
 // TODO: panic on missing env variables
 const sourceConfig: SourceConfig = {
@@ -15,7 +16,7 @@ const sourceConfig: SourceConfig = {
 logger.debug('Got source config', sourceConfig);
 
 // TODO: don't assume client type
-const source = initPleromaClient(sourceConfig);
+const source = initPleromaClient(sourceConfig, null);
 
 // --- Subscription
 
@@ -36,7 +37,7 @@ const matrixConfig: MatrixConfig = {
 
 logger.debug('Got matrix config', matrixConfig)
 
-initMatrixBot(matrixConfig, {
+const matrix = initMatrixBot(matrixConfig, {
 	reg: () => {
 		return source.client.generateAuthUrl(
 			source.config.clientId,
@@ -52,3 +53,19 @@ initMatrixBot(matrixConfig, {
 		).then(JSON.stringify)
 	}
 });
+
+if (subscription.accessToken) {
+	let subscriptionCient = initPleromaClient(sourceConfig, subscription.accessToken);
+	subscriptionCient.client.getHomeTimeline({
+		limit: 10,
+	}).then((response) => {
+		// logger.debug(response);
+		response.data.forEach((status) => {
+			logger.debug(status);
+			matrix.sendHtmlText(subscription.roomId, renderMessage(status));
+		});
+	});
+
+	// logger.debug(`Sending message to ${subscription.roomId}`);
+	// matrix.sendText(subscription.roomId, 'Oh hi.');
+}

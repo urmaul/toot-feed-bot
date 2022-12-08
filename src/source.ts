@@ -15,7 +15,7 @@ export interface PleromaClient extends SourceClient {
     config: SourceConfig;
 }
 
-export function initPleromaClient(config: SourceConfig): PleromaClient {
-	const client: Pleroma = generator('pleroma', config.baseUrl) as Pleroma;
+export function initPleromaClient(config: SourceConfig, accessToken: string | null): PleromaClient {
+	const client: Pleroma = generator('pleroma', config.baseUrl, accessToken) as Pleroma;
 	return { client, config };
 }

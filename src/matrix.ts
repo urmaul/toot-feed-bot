@@ -24,7 +24,7 @@ export function initMatrixBot(config: MatrixConfig, controller: MatrixController
 	// time it restarts, so we need to prepare a storage provider. Here we use
 	// a simple JSON database.
 	// TODO: specify dir better
-	const storage = new SimpleFsStorageProvider('./data/matrix-bot.json');
+	const storage = new SimpleFsStorageProvider(config.fsStoragePath);
 	// const crypto = new RustSdkCryptoStorageProvider('./data/matrix-bot-sled');
 
 	// Now we can create the client and set it up to automatically join rooms.
