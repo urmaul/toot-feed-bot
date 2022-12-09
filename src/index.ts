@@ -60,10 +60,12 @@ if (subscription.accessToken) {
 		limit: 10,
 	}).then((response) => {
 		// logger.debug(response);
-		response.data.forEach((status) => {
-			logger.debug(status);
-			matrix.sendHtmlText(subscription.roomId, renderMessage(status));
-		});
+		response.data
+			.filter((status) => !status.in_reply_to_id)
+			.forEach((status) => {
+				logger.debug(status);
+				matrix.sendHtmlText(subscription.roomId, renderMessage(status));
+			});
 	});
 
 	// logger.debug(`Sending message to ${subscription.roomId}`);
