@@ -20,9 +20,10 @@ const source = initPleromaClient(sourceConfig, null);
 
 // --- Subscription
 
-const subscription: Subscription = {
+let subscription: Subscription = {
 	roomId: process.env.SUBSCRIPTION_ROOM_ID || '',
 	accessToken: process.env.SUBSCRIPTION_ACCESS_TOKEN || '',
+	maxStatusId: undefined,
 };
 
 logger.debug('Got subscription data', subscription);
@@ -56,18 +57,30 @@ const matrix = initMatrixBot(matrixConfig, {
 
 if (subscription.accessToken) {
 	let subscriptionCient = initPleromaClient(sourceConfig, subscription.accessToken);
-	subscriptionCient.client.getHomeTimeline({
-		limit: 10,
-	}).then((response) => {
-		// logger.debug(response);
-		response.data
-			.filter((status) => !status.in_reply_to_id)
-			.forEach((status) => {
-				logger.debug(status);
-				matrix.sendHtmlText(subscription.roomId, renderMessage(status));
-			});
-	});
+	let interval = 5 * 60 // seconds
 
-	// logger.debug(`Sending message to ${subscription.roomId}`);
-	// matrix.sendText(subscription.roomId, 'Oh hi.');
+	setInterval(
+		() => {
+			subscriptionCient.client.getHomeTimeline({
+				since_id: subscription.maxStatusId,
+			}).then((response) => {
+				logger.debug(`${subscription.roomId}: Loaded ${response.data.length} statuses`);
+
+				// Update maxStatusId
+				response.data.forEach((status) => {
+					if (!subscription.maxStatusId || status.id > subscription.maxStatusId) {
+						subscription.maxStatusId = status.id;
+					}
+				});
+
+				response.data
+					.filter((status) => !status.in_reply_to_id && !status.reblog?.in_reply_to_id)
+					.forEach((status) => {
+						logger.debug(status);
+						matrix.sendHtmlText(subscription.roomId, renderMessage(status));
+					});
+			});
+		},
+		interval * 1000
+	)
 }

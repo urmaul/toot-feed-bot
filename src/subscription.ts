@@ -2,5 +2,6 @@ export interface Subscription {
     // Matrix room id
     roomId: string;
     // TODO: add a source reference
-    accessToken: string | null;
+    accessToken: string | undefined;
+    maxStatusId: string | undefined;
 }
