@@ -58,7 +58,7 @@ async function run() {
 
 	if (subscription.accessToken) {
 		const subscriptionCient = initPleromaClient(sourceConfig, subscription.accessToken);
-		const interval = 5 * 60 // seconds
+		const interval = parseInt(process.env.INTERVAL_SECONDS || '300')
 
 		const reload = () => {
 			subscriptionCient.client.getHomeTimeline({
