@@ -3,6 +3,7 @@ import {
 	SimpleFsStorageProvider,
 	AutojoinRoomsMixin,
 	RichReply,
+	RustSdkCryptoStorageProvider,
 } from 'matrix-bot-sdk';
 import { logger } from './logger';
 
@@ -19,7 +20,7 @@ export interface MatrixController {
     auth: (code: string) => Promise<string>;
 }
 
-export function initMatrixBot(config: MatrixConfig, controller: MatrixController): MatrixClient {
+export async function initMatrixBot(config: MatrixConfig, controller: MatrixController): Promise<MatrixClient> {
 	// We'll want to make sure the bot doesn't have to do an initial sync every
 	// time it restarts, so we need to prepare a storage provider. Here we use
 	// a simple JSON database.
@@ -35,11 +36,6 @@ export function initMatrixBot(config: MatrixConfig, controller: MatrixController
 	// handle our command.
 	matrix.on('room.message', handleCommand);
 
-	// Now that the client is all set up and the event handler is registered, start the
-	// client up. This will start it syncing.
-	matrix.start().then(() => logger.info('Matrix client started!'));
-
-	// This is our event handler for dealing with the `!hello` command.
 	async function handleCommand(roomId, event) {
 		logger.debug(`${roomId} ${JSON.stringify(event)}`)
 
@@ -76,6 +72,10 @@ export function initMatrixBot(config: MatrixConfig, controller: MatrixController
 			return;
 		}
 	}
+
+	// Now that the client is all set up and the event handler is registered, start the
+	// client up. This will start it syncing.
+	await matrix.start().then(() => logger.info('Matrix client started!'));
 
 	return matrix;
 }

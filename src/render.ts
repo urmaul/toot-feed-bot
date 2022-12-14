@@ -1,10 +1,10 @@
 function account(status: Entity.Status): string {
-    return `<b>${status.account.display_name}</b> <a href="${status.url}">${status.account.acct}</a>`;
+	return `<b>${status.account.display_name}</b> <a href="${status.url}">${status.account.acct}</a>`;
 }
 
 
 export function renderMessage(status: Entity.Status): string {
-    return '' +
+	return '' +
         '<p>' +
             account(status) +
             (status.reblog ? ` ♻️ ${account(status.reblog)}` : '') +
