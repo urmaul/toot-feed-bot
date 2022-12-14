@@ -64,7 +64,7 @@
   },
   "dependencies": {
     "@tsed/logger": "^6.3.3",
-    "matrix-bot-sdk": "^0.6.2",
+    "matrix-bot-sdk": "turt2live/matrix-bot-sdk#main",
     "megalodon": "^4.1.3"
   }
 }
