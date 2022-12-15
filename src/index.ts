@@ -1,43 +1,17 @@
 'use strict';
 
-import { initPleromaClient, SourceConfig } from './source';
-import { initMatrixBot, MatrixConfig } from './matrix';
+import { initPleromaClient } from './source';
+import { initMatrixBot } from './matrix';
 import { logger } from './logger';
 import { Subscription } from './subscription';
 import { renderMessage } from './render';
+import { appConfig, matrixConfig, sourceConfig, subscriptionConfig } from './config';
 
 async function run() {
-	// TODO: panic on missing env variables
-	const sourceConfig: SourceConfig = {
-		baseUrl: process.env.FEDIVERSE_BASE_URL || '',
-		clientId: process.env.FEDIVERSE_CLIENT_ID || '',
-		clientSecret: process.env.FEDIVERSE_CLIENT_SECRET || '',
-	};
-
-	logger.debug('Got source config', sourceConfig);
-
 	// TODO: don't assume client type
 	const source = initPleromaClient(sourceConfig, null);
 
-	// --- Subscription
-
-	const subscription: Subscription = {
-		roomId: process.env.SUBSCRIPTION_ROOM_ID || '',
-		accessToken: process.env.SUBSCRIPTION_ACCESS_TOKEN || '',
-		maxStatusId: undefined,
-	};
-
-	logger.debug('Got subscription data', subscription);
-
 	// ----- Matrix bot
-
-	const matrixConfig: MatrixConfig = {
-		serverUrl: process.env.MATRIX_SERVER_URL || '',
-		accessToken: process.env.MATRIX_ACCESS_TOKEN || '',
-		fsStoragePath: './data/matrix-bot.json',
-	}
-
-	logger.debug('Got matrix config', matrixConfig)
 
 	const matrix = await initMatrixBot(matrixConfig, {
 		reg: () => {
@@ -56,9 +30,10 @@ async function run() {
 		}
 	});
 
+	let subscription: Subscription = subscriptionConfig;
+
 	if (subscription.accessToken) {
 		const subscriptionCient = initPleromaClient(sourceConfig, subscription.accessToken);
-		const interval = parseInt(process.env.INTERVAL_SECONDS || '300')
 
 		const reload = () => {
 			subscriptionCient.client.getHomeTimeline({
@@ -83,7 +58,7 @@ async function run() {
 		};
 
 		reload();
-		setInterval(reload, interval * 1000);
+		setInterval(reload, appConfig.interval * 1000);
 	}
 
 }

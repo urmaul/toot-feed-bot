@@ -39,6 +39,7 @@
     "@typescript-eslint/eslint-plugin": "^5.45.1",
     "@typescript-eslint/parser": "^5.45.1",
     "chai": "^4.1.2",
+    "dotenv": "^16.0.3",
     "eslint": "^8.28.0",
     "mocha": "^10.1.0",
     "source-map-support": "^0.5.21",
@@ -47,6 +48,7 @@
   },
   "dependencies": {
     "@tsed/logger": "^6.3.3",
+    "env-var": "^7.3.0",
     "matrix-bot-sdk": "^0.6.2",
     "megalodon": "^4.1.3"
   }
