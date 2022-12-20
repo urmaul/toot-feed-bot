@@ -49,6 +49,7 @@
   "dependencies": {
     "@tsed/logger": "^6.3.3",
     "env-var": "^7.3.0",
+    "keyv": "^4.5.2",
     "matrix-bot-sdk": "^0.6.3",
     "megalodon": "^5.0.1",
     "node-html-parser": "^6.1.4"
