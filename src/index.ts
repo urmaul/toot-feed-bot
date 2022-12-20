@@ -6,6 +6,7 @@ import { logger } from './logger';
 import { Subscription } from './subscription';
 import { renderMessage } from './render';
 import loadConfigs from './config';
+import Keyv from 'keyv';
 
 const configs = loadConfigs();
 
@@ -34,30 +35,37 @@ async function run() {
 
 	let subscription: Subscription = configs.subscription;
 
+	const keyv = new Keyv();
+	keyv.on('error', err => logger.error('Connection Error', err));
+
 	if (subscription.accessToken) {
 		const subscriptionCient = initPleromaClient(configs.source, subscription.accessToken);
 
-		const reload = () => {
-			subscriptionCient.client.getHomeTimeline({
-				limit: configs.app.statusLimit,
-				since_id: subscription.maxStatusId,
-			}).then((response) => {
-				logger.debug(`${subscription.roomId}: Loaded ${response.data.length} statuses`);
+		const maxStatusIdKey = `${subscription.roomId}//maxStatusId`;
 
-				// Update maxStatusId
-				response.data.forEach((status) => {
-					if (!subscription.maxStatusId || status.id > subscription.maxStatusId) {
-						subscription.maxStatusId = status.id;
-					}
+		const reload = async () => {
+			const maxStatusId = await keyv.get(maxStatusIdKey);
+
+			const response = await subscriptionCient.client.getHomeTimeline({
+				limit: configs.app.statusLimit,
+				since_id: maxStatusId,
+			})
+
+			logger.debug(`${subscription.roomId}: Loaded ${response.data.length} statuses`);
+
+			response.data
+				// .filter((status) => !status.in_reply_to_id && !status.reblog?.in_reply_to_id)
+				// .filter((status) => status.reblog)
+				.forEach((status) => {
+					matrix.sendHtmlText(subscription.roomId, renderMessage(status));
 				});
 
-				response.data
-					// .filter((status) => !status.in_reply_to_id && !status.reblog?.in_reply_to_id)
-					// .filter((status) => status.reblog)
-					.forEach((status) => {
-						matrix.sendHtmlText(subscription.roomId, renderMessage(status));
-					});
-			});
+			// Update maxStatusId
+			const newMaxStatusId: string | undefined = response.data.map(s => s.id)
+				.reduce((a, b) => a > b ? a : b, maxStatusId);
+			if (newMaxStatusId !== maxStatusId) {
+				await keyv.set(maxStatusIdKey, newMaxStatusId);
+			}
 		};
 
 		reload();

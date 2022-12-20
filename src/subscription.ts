@@ -3,5 +3,4 @@ export interface Subscription {
     roomId: string;
     // TODO: add a source reference
     accessToken: string | undefined;
-    maxStatusId: string | undefined;
 }
