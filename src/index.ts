@@ -37,7 +37,7 @@ async function run() {
 
 		const reload = () => {
 			subscriptionCient.client.getHomeTimeline({
-				limit: 10,
+				limit: appConfig.statusLimit,
 				since_id: subscription.maxStatusId,
 			}).then((response) => {
 				logger.debug(`${subscription.roomId}: Loaded ${response.data.length} statuses`);

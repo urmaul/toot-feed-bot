@@ -3,7 +3,10 @@ import env from 'env-var';
 export const appConfig = {
     name: env.get('APP_NAME').default('TootFeedBot').asString(),
     dataDir: env.get('APP_DATA_DIR').default('./data').asString(),
+    // Number of seconds between refresh requests
     interval: env.get('APP_INTERVAL_SECONDS').default(5 * 60).asIntPositive(),
+    // Maximum number of statuses that can be requested from the source at once
+    statusLimit: env.get('APP_STATUS_LIMIT').asInt(),
 }
 
 export const sourceConfig = {
