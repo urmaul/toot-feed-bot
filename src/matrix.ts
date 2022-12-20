@@ -13,6 +13,7 @@ export interface MatrixConfig {
     // see https://t2bot.io/docs/access_tokens
     accessToken: string;
     fsStoragePath: string;
+    cryptoStorageDir: string;
 }
 
 export interface MatrixController {
@@ -24,12 +25,11 @@ export async function initMatrixBot(config: MatrixConfig, controller: MatrixCont
 	// We'll want to make sure the bot doesn't have to do an initial sync every
 	// time it restarts, so we need to prepare a storage provider. Here we use
 	// a simple JSON database.
-	// TODO: specify dir better
 	const storage = new SimpleFsStorageProvider(config.fsStoragePath);
-	// const crypto = new RustSdkCryptoStorageProvider('./data/matrix-bot-sled');
+	const crypto = new RustSdkCryptoStorageProvider(config.cryptoStorageDir);
 
 	// Now we can create the client and set it up to automatically join rooms.
-	const matrix = new MatrixClient(config.serverUrl, config.accessToken, storage);
+	const matrix = new MatrixClient(config.serverUrl, config.accessToken, storage, crypto);
 	AutojoinRoomsMixin.setupOnClient(matrix);
 
 	// We also want to make sure we can receive events - this is where we will

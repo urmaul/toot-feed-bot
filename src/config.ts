@@ -26,6 +26,7 @@ export default () => {
             serverUrl: env.get('MATRIX_SERVER_URL').required().asUrlObject().origin,
             accessToken: env.get('MATRIX_ACCESS_TOKEN').required().asString(),
             fsStoragePath: `${dataDir}/matrix-bot.json`,
+            cryptoStorageDir: `${dataDir}/matrix-bot-sled`,
         },
     };
     

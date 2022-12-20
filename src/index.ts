@@ -55,7 +55,6 @@ async function run() {
 					// .filter((status) => !status.in_reply_to_id && !status.reblog?.in_reply_to_id)
 					// .filter((status) => status.reblog)
 					.forEach((status) => {
-						// logger.debug(status);
 						matrix.sendHtmlText(subscription.roomId, renderMessage(status));
 					});
 			});
