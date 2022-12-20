@@ -1,6 +1,5 @@
 import { $log } from '@tsed/logger';
-import { appConfig } from './config';
 
-$log.name = appConfig.name;
+$log.name = 'TootFeedBot';
 
 export const logger = $log;

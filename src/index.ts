@@ -5,15 +5,17 @@ import { initMatrixBot } from './matrix';
 import { logger } from './logger';
 import { Subscription } from './subscription';
 import { renderMessage } from './render';
-import { appConfig, matrixConfig, sourceConfig, subscriptionConfig } from './config';
+import loadConfigs from './config';
+
+const configs = loadConfigs();
 
 async function run() {
 	// TODO: don't assume client type
-	const source = initPleromaClient(sourceConfig, null);
+	const source = initPleromaClient(configs.source, null);
 
 	// ----- Matrix bot
 
-	const matrix = await initMatrixBot(matrixConfig, {
+	const matrix = await initMatrixBot(configs.matrix, {
 		reg: () => {
 			return source.client.generateAuthUrl(
 				source.config.clientId,
@@ -30,14 +32,14 @@ async function run() {
 		}
 	});
 
-	let subscription: Subscription = subscriptionConfig;
+	let subscription: Subscription = configs.subscription;
 
 	if (subscription.accessToken) {
-		const subscriptionCient = initPleromaClient(sourceConfig, subscription.accessToken);
+		const subscriptionCient = initPleromaClient(configs.source, subscription.accessToken);
 
 		const reload = () => {
 			subscriptionCient.client.getHomeTimeline({
-				limit: appConfig.statusLimit,
+				limit: configs.app.statusLimit,
 				since_id: subscription.maxStatusId,
 			}).then((response) => {
 				logger.debug(`${subscription.roomId}: Loaded ${response.data.length} statuses`);
@@ -60,7 +62,7 @@ async function run() {
 		};
 
 		reload();
-		setInterval(reload, appConfig.interval * 1000);
+		setInterval(reload, configs.app.interval * 1000);
 	}
 
 }

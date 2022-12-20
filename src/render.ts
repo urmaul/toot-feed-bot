@@ -1,22 +1,27 @@
 import { logger } from './logger';
 import { parse } from 'node-html-parser';
+import { Entity } from 'megalodon';
 
 export function renderMessage(status: Entity.Status): string {
-    status.media_attachments.forEach((att) => logger.debug(att));
-
-    let content = parse(status.content);
-    content
-        .querySelectorAll('a[rel="tag"],a.mention')
-        .forEach((el) => el.replaceWith(`<em>${el.innerHTML}</em>`));
+    let content = unlinkMentions(status.content);
 
 	return '<hr>' +
         `<p>` +
             account(status) +
             (status.reblog ? ` ♻️ ${account(status.reblog)}` : '') +
         `</p>` +
-        content.outerHTML +
+        content +
         status.media_attachments.map(renderMediaAttachment);
         //`<br><a href="${status.url}">🔗</a>`;
+}
+
+export function unlinkMentions(content: string): string {
+    const html = parse(content);
+    html
+        .querySelectorAll('a[rel="tag"],a.mention')
+        .forEach((el) => el.replaceWith(`<em>${el.innerHTML}</em>`));
+
+    return html.outerHTML;
 }
 
 function account(status: Entity.Status): string {
