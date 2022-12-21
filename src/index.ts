@@ -41,7 +41,7 @@ async function run() {
 	if (subscription.accessToken) {
 		const subscriptionCient = initPleromaClient(configs.source, subscription.accessToken);
 
-		const maxStatusIdKey = `${subscription.roomId}//maxStatusId`;
+		const maxStatusIdKey = `maxStatusId:${subscription.roomId}`;
 
 		const reload = async () => {
 			const maxStatusId = await keyv.get(maxStatusIdKey);
