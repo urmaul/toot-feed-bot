@@ -11,6 +11,10 @@ export default () => {
             interval: env.get('APP_INTERVAL_SECONDS').default(5 * 60).asIntPositive(),
             // Maximum number of statuses that can be requested from the source at once
             statusLimit: env.get('APP_STATUS_LIMIT').asInt(),
+            // Connection line for the Keyv store
+            // See: https://github.com/jaredwray/keyv#storage-adapters
+            // So far, only sqlite is supported
+            storeUri: env.get('APP_STORE_URI').asString(),
         },
         source: {
             baseUrl: env.get('FEDIVERSE_BASE_URL').required().asUrlObject().origin,

@@ -35,7 +35,7 @@ async function run() {
 
 	let subscription: Subscription = configs.subscription;
 
-	const keyv = new Keyv();
+	const keyv = new Keyv(configs.app.storeUri);
 	keyv.on('error', err => logger.error('Connection Error', err));
 
 	if (subscription.accessToken) {
