@@ -53,22 +53,29 @@ async function run() {
 
 			logger.debug(`${subscription.roomId}: Loaded ${response.data.length} statuses`);
 
-			response.data
-				// .filter((status) => !status.in_reply_to_id && !status.reblog?.in_reply_to_id)
-				// .filter((status) => status.reblog)
-				.forEach((status) => {
-					matrix.sendHtmlText(subscription.roomId, renderMessage(status));
-				});
+			let newMaxStatusId = maxStatusId;
+			try {
+				for (const status of response.data) {
+					// .filter((status) => !status.in_reply_to_id && !status.reblog?.in_reply_to_id)
+					// .filter((status) => status.reblog)
+	
+					await matrix.sendHtmlText(subscription.roomId, renderMessage(status));
+	
+					if (newMaxStatusId === undefined || status.id > newMaxStatusId) {
+						newMaxStatusId = status.id;
+					}
+				}					
+			} catch (error) {
+				logger.error(error);
+			}
 
 			// Update maxStatusId
-			const newMaxStatusId: string | undefined = response.data.map(s => s.id)
-				.reduce((a, b) => a > b ? a : b, maxStatusId);
 			if (newMaxStatusId !== maxStatusId) {
 				await keyv.set(maxStatusIdKey, newMaxStatusId);
 			}
 		};
 
-		reload();
+		await reload();
 		setInterval(reload, configs.app.interval * 1000);
 	}
 
