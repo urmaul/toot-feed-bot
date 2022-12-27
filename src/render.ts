@@ -3,16 +3,22 @@ import { parse } from 'node-html-parser';
 import { Entity } from 'megalodon';
 
 export function renderMessage(status: Entity.Status): string {
-    let content = unlinkMentions(status.content);
-
-	return '<hr>' +
+    let byline =
         `<p>` +
             account(status) +
             (status.reblog ? ` ♻️ ${account(status.reblog)}` : '') +
-        `</p>` +
-        content +
-        status.media_attachments.map(renderMediaAttachment);
-        //`<br><a href="${status.url}">🔗</a>`;
+        `</p>`;
+
+    let content = unlinkMentions(status.content);
+
+    let blocks: string[] = status.media_attachments.map(renderMediaAttachment);
+    
+    const poll = status.poll || status.reblog?.poll;
+    if (poll) {
+        blocks.push(renderPoll(poll));
+    }
+    
+	return '<hr>' + byline + content + blocks.join('<br>');
 }
 
 export function unlinkMentions(content: string): string {
@@ -37,4 +43,14 @@ function renderMediaAttachment(media: Entity.Attachment): string {
     }
 
     return `<br>${icon} ${media.remote_url}`
+}
+
+export function renderPoll(poll: Entity.Poll): string {
+    const optionEmoji = poll.multiple ? '☑️' : '🔘';
+    return '🗳️:' + poll.options.map(
+        (option) => {
+            const votesLine = option.votes_count !== null ? ` (📊 ${option.votes_count})` : '';
+            return `<br>${optionEmoji} ${option.title}${votesLine}`
+        }
+    ).join('');
 }
