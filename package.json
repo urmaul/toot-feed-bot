@@ -24,11 +24,11 @@
   ],
   "scripts": {
     "build": "npm run clean && npm run lint && tsc",
+    "build-tsc": "tsc",
     "build-dev": "npm run clean && tsc",
     "clean": "(rm -r ./dist 2>/dev/null || true)",
     "clean:all": "npm run clean && (rm -r ./node_modules || true)",
     "lint": "eslint --ext .ts --fix src/**/*.ts test/**/*.ts",
-    "prepare": "npm run build",
     "test": "mocha",
     "upgrade": "npx npm-check -u"
   },

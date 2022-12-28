@@ -1,0 +1,11 @@
+/.git
+/.github
+/data
+/dist
+/node_modules
+/test
+/.env
+/.travis.yml
+/Dockerfile
+/LICENSE
+/README.md
