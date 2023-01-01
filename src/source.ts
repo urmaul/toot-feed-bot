@@ -1,7 +1,7 @@
 import generator, { MegalodonInterface, Pleroma } from 'megalodon';
 
 export interface SourceConfig {
-    baseUrl: string;
+    host: string;
     clientId: string;
     clientSecret: string;
 }
@@ -16,6 +16,6 @@ export interface PleromaClient extends SourceClient {
 }
 
 export function initPleromaClient(config: SourceConfig, accessToken: string | null): PleromaClient {
-	const client: Pleroma = generator('pleroma', config.baseUrl, accessToken) as Pleroma;
+	const client: Pleroma = generator('pleroma', `https://${config.host}`, accessToken) as Pleroma;
 	return { client, config };
 }
