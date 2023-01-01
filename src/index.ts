@@ -70,11 +70,16 @@ async function run() {
 			let newMaxStatusId = maxStatusId;
 			try {
 				for (const status of response.data) {
-					// .filter((status) => !status.in_reply_to_id && !status.reblog?.in_reply_to_id)
-					// .filter((status) => status.reblog)
-	
-					await matrix.sendHtmlText(subscription.roomId, renderMessage(status));
-	
+					const shouldSkip = status.in_reply_to_id;
+						// || !status.reblog?.in_reply_to_id
+						// || status.reblog
+					
+					if (!shouldSkip) {
+						await matrix.sendHtmlText(subscription.roomId, renderMessage(status));
+					} else {
+						logger.debug(`Skipping ${status.content}`);
+					}
+
 					if (newMaxStatusId === undefined || status.id > newMaxStatusId) {
 						newMaxStatusId = status.id;
 					}
