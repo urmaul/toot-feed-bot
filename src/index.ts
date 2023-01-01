@@ -47,8 +47,18 @@ async function run() {
 
 		const maxStatusIdKey = `maxStatusId:${subscription.roomId}`;
 
+		const getMaxStatusId = async () => {
+			try {
+				return await keyv.get(maxStatusIdKey);
+			} catch (error) {
+				logger.error(error);
+				// Fallback to no maxStatusId
+				return undefined;
+			}
+		}
+
 		const reload = async () => {
-			const maxStatusId = await keyv.get(maxStatusIdKey);
+			const maxStatusId = await getMaxStatusId();
 
 			const response = await subscriptionCient.client.getHomeTimeline({
 				limit: configs.app.statusLimit,
