@@ -18,12 +18,21 @@ async function run() {
 	// ----- Matrix bot
 
 	const matrix = await initMatrixBot(configs.matrix, {
-		reg: () => {
-			return source.client.generateAuthUrl(
-				source.config.clientId,
-				source.config.clientSecret,
-				{scope: ['read']}
-			)
+		reg: (url: string) => {
+			try {
+				const urlObject = new URL(url);
+				if (urlObject.origin === configs.source.baseUrl) {
+					return source.client.generateAuthUrl(
+						source.config.clientId,
+						source.config.clientSecret,
+						{scope: ['read']}
+					)
+				} else {
+					return Promise.resolve(`Currently only ${configs.source.baseUrl} is supported`);
+				}
+			} catch (error) {
+				return Promise.resolve('Usage: <pre>!reg &lt;FediverseServerUrl&gt;</pre>');
+			}
 		},
 		auth: (code: string) => {
 			return source.client.fetchAccessToken(

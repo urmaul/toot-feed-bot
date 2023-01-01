@@ -17,7 +17,7 @@ export interface MatrixConfig {
 }
 
 export interface MatrixController {
-    reg: () => Promise<string>;
+    reg: (url: string) => Promise<string>;
     auth: (code: string) => Promise<string>;
 }
 
@@ -36,6 +36,8 @@ export async function initMatrixBot(config: MatrixConfig, controller: MatrixCont
 	// handle our command.
 	matrix.on('room.message', handleCommand);
 
+	const botUserId = await matrix.getUserId();
+
 	async function handleCommand(roomId, event) {
 		logger.debug(`${roomId} ${JSON.stringify(event)}`)
 
@@ -45,16 +47,16 @@ export async function initMatrixBot(config: MatrixConfig, controller: MatrixCont
 		// Don't handle non-text events
 		if (event['content']['msgtype'] !== 'm.text') return;
 
-		// We never send `m.text` messages so this isn't required, however this is
-		// how you would filter out events sent by the bot itself.
-		if (event['sender'] === await matrix.getUserId()) return;
+		// Filter out events sent by the bot itself.
+		if (event['sender'] === botUserId) return;
 
 		// Make sure that the event looks like a command we're expecting
 		const body = event['content']['body'];
 		if (!body) return;
 
 		if (body.startsWith('!reg')) {
-			const replyBody = await controller.reg();
+			const url = body.replace(/!reg +/, '')
+			const replyBody = await controller.reg(url);
 			logger.debug(`Replying with ${replyBody}`);
 			const reply = RichReply.createFor(roomId, event, replyBody, replyBody);
 			reply['msgtype'] = 'm.notice';
