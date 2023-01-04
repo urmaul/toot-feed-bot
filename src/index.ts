@@ -21,14 +21,14 @@ async function run() {
 		reg: (url: string) => {
 			try {
 				const urlObject = new URL(url);
-				if (urlObject.host === configs.source.host) {
+				if (urlObject.hostname === configs.source.hostname) {
 					return source.client.generateAuthUrl(
 						source.config.clientId,
 						source.config.clientSecret,
 						{scope: ['read']}
 					)
 				} else {
-					return Promise.resolve(`Currently only https://${configs.source.host} is supported`);
+					return Promise.resolve(`Currently only https://${configs.source.hostname} is supported`);
 				}
 			} catch (error) {
 				return Promise.resolve('Usage: <pre>!reg &lt;FediverseServerUrl&gt;</pre>');
