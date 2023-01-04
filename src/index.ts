@@ -53,7 +53,7 @@ async function run() {
 	keyv.on('error', err => logger.error('Connection Error', err));
 
 	if (subscription.accessToken) {
-		const subscriptionCient = initPleromaClient(configs.source, subscription.accessToken);
+		const subscriptionCient = initSourceClient(configs.source, subscription.accessToken);
 
 		const maxStatusIdKey = `maxStatusId:${subscription.roomId}`;
 
