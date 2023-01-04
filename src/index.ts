@@ -1,6 +1,6 @@
 'use strict';
 
-import { initPleromaClient } from './source';
+import { initSourceClient } from './source';
 import { initMatrixBot } from './matrix';
 import { logger } from './logger';
 import { Subscription } from './subscription';
@@ -8,12 +8,12 @@ import { renderMessage } from './render';
 import loadConfigs from './config';
 import Keyv from 'keyv';
 import CryptoJS from 'crypto-js';
+import { Pleroma } from 'megalodon';
 
 const configs = loadConfigs();
 
 async function run() {
-	// TODO: don't assume client type
-	const source = initPleromaClient(configs.source, null);
+	const source = initSourceClient(configs.source, null);
 
 	// ----- Matrix bot
 
@@ -22,7 +22,8 @@ async function run() {
 			try {
 				const urlObject = new URL(url);
 				if (urlObject.hostname === configs.source.hostname) {
-					return source.client.generateAuthUrl(
+					const pleromaClient = source.client as Pleroma
+					return pleromaClient.generateAuthUrl(
 						source.config.clientId,
 						source.config.clientSecret,
 						{scope: ['read']}

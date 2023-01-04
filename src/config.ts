@@ -23,6 +23,7 @@ export default () => {
             secret: env.get('STORE_SECRET').default('').asString(),
         },
         source: {
+            sns: env.get('FEDIVERSE_SNS').required().asEnum(['pleroma']),
             hostname: env.get('FEDIVERSE_BASE_URL').required().asUrlObject().hostname,
             clientId: env.get('FEDIVERSE_CLIENT_ID').required().asString(),
             clientSecret: env.get('FEDIVERSE_CLIENT_SECRET').required().asString(),
