@@ -31,7 +31,6 @@ export default () => {
         subscription: {
             roomId: env.get('SUBSCRIPTION_ROOM_ID').required().asString(),
             accessToken: env.get('SUBSCRIPTION_ACCESS_TOKEN').required().asString(),
-            maxStatusId: undefined,
         },
         matrix: {
             serverUrl: env.get('MATRIX_SERVER_URL').required().asUrlObject().origin,

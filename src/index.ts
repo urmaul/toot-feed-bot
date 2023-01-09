@@ -6,9 +6,8 @@ import { logger } from './logger';
 import { Subscription } from './subscription';
 import { renderMessage } from './render';
 import loadConfigs from './config';
-import Keyv from 'keyv';
-import CryptoJS from 'crypto-js';
 import { Pleroma } from 'megalodon';
+import { initStore } from './store';
 
 const configs = loadConfigs();
 
@@ -46,11 +45,7 @@ async function run() {
 
 	let subscription: Subscription = configs.subscription;
 
-	const keyv = new Keyv(configs.store.uri, {
-		serialize: (data) => CryptoJS.AES.encrypt(JSON.stringify(data), configs.store.secret).toString(),
-		deserialize: (text) => JSON.parse(CryptoJS.AES.decrypt(text, configs.store.secret).toString(CryptoJS.enc.Utf8))
-	});
-	keyv.on('error', err => logger.error('Connection Error', err));
+	const keyv = initStore(configs.store);
 
 	if (subscription.accessToken) {
 		const subscriptionCient = initSourceClient(configs.source, subscription.accessToken);
@@ -86,7 +81,8 @@ async function run() {
 						// || status.reblog
 					
 					if (!shouldSkip) {
-						await matrix.sendHtmlText(subscription.roomId, renderMessage(status));
+						const message = renderMessage(status);
+						await matrix.sendHtmlText(subscription.roomId, message);
 					} else {
 						logger.debug(`Skipping ${status.content}`);
 					}
