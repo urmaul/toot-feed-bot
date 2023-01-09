@@ -4,13 +4,18 @@ import { Entity } from 'megalodon';
 
 export function renderMessage(status: Entity.Status): string {
     let byline =
-        account(status) +
-        (status.reblog ? ` ♻️ ${account(status.reblog)}` : '') +
-        `:<br>`;
+        `<p>` +
+            account(status) +
+            (status.reblog ? ` ♻️ ${account(status.reblog)}` : '') +
+        `:</p>`;
 
     let content = unlinkMentions(status.content);
 
-    let blocks: string[] = status.media_attachments.map(renderMediaAttachment);
+    let blocks: string[] = [];
+
+    if (status.media_attachments) {
+        blocks.push(status.media_attachments.map(renderMediaAttachment).join(' '));
+    }
     
     const poll = status.poll || status.reblog?.poll;
     if (poll) {
@@ -41,7 +46,7 @@ function renderMediaAttachment(media: Entity.Attachment): string {
         logger.debug(`Unknown attachment type "${media.type}"`);
     }
 
-    return `${icon} ${media.remote_url}`
+    return `<a href="${media.remote_url}">${icon}</a>`
 }
 
 export function renderPoll(poll: Entity.Poll): string {
