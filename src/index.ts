@@ -80,7 +80,8 @@ async function run() {
 			let newMaxStatusId = maxStatusId;
 			try {
 				for (const status of response.data) {
-					const shouldSkip = status.in_reply_to_id;
+					const shouldSkip = 
+						(status.in_reply_to_account_id && status.in_reply_to_account_id !== status.account.id);
 						// || !status.reblog?.in_reply_to_id
 						// || status.reblog
 					
