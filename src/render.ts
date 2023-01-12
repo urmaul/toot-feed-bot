@@ -2,6 +2,8 @@ import { logger } from './logger';
 import { parse } from 'node-html-parser';
 import { Entity } from 'megalodon';
 
+const typeIcons = {'image': '🖼'};
+
 export function renderMessage(status: Entity.Status): string {
     let byline =
         `<p>` +
@@ -13,8 +15,13 @@ export function renderMessage(status: Entity.Status): string {
 
     let blocks: string[] = [];
 
-    if (status.media_attachments) {
-        blocks.push(status.media_attachments.map(renderMediaAttachment).join(' '));
+    if (status.media_attachments.length > 0) {
+        blocks.push(
+            `<details>` +
+            `<summary>${status.media_attachments.map(mediaIcon).join(" ")}</summary>` +
+            status.media_attachments.map(renderMediaAttachment).join("<br>") +
+            `</details>`
+        );
     }
     
     const poll = status.poll || status.reblog?.poll;
@@ -39,14 +46,17 @@ function account(status: Entity.Status): string {
 }
 
 function renderMediaAttachment(media: Entity.Attachment): string {
-    const typeIcons = {'image': '🖼'};
+    return `<a href="${media.remote_url}">${mediaIcon(media)} ${media.description || media.remote_url}</a>`;
+}
+
+function mediaIcon(media: Entity.Attachment): string {
     const icon = typeIcons[media.type] || '📦';
 
     if (!typeIcons[media.type]) {
-        logger.debug(`Unknown attachment type "${media.type}"`);
+        logger.debug(`Unknown attachment type "${media.type}" in ${media}`);
     }
 
-    return `<a href="${media.remote_url}">${icon}</a>`
+    return icon;
 }
 
 export function renderPoll(poll: Entity.Poll): string {
