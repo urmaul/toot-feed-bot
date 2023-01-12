@@ -5,11 +5,15 @@ import { Entity } from 'megalodon';
 const typeIcons = {'image': '🖼'};
 
 export function renderMessage(status: Entity.Status): string {
-    let byline =
-        `<p>` +
-            account(status) +
-            (status.reblog ? ` ♻️ ${account(status.reblog)}` : '') +
-        `:</p>`;
+    let title =
+        `<details>` +
+        `<summary><b>${status.account.display_name}` + (status.reblog ? ` ♻️ ${status.reblog.account.display_name}` : '') + `</b></summary>` +
+        `<blockquote>` +
+            `<p>id: <code>${status.id}</code><br>${status.uri.replace(/^https?:\/\//, '')}</p>` +
+            accountInfo(status) +
+            (status.reblog ? accountInfo(status.reblog) : '') +
+        `</blockquote>` +
+        `</details>`;
 
     let content = unlinkMentions(status.content);
 
@@ -29,7 +33,7 @@ export function renderMessage(status: Entity.Status): string {
         blocks.push(renderPoll(poll));
     }
     
-	return byline + content + blocks.join('<br>');
+	return title + content + blocks.join('<br>');
 }
 
 export function unlinkMentions(content: string): string {
@@ -41,8 +45,11 @@ export function unlinkMentions(content: string): string {
     return html.outerHTML;
 }
 
-function account(status: Entity.Status): string {
-	return `<b>${status.account.display_name}</b> (${status.account.acct})`;
+function accountInfo(status: Entity.Status): string {
+    const noteHtml = parse(status.account.note);
+    const noteText = noteHtml.textContent;
+
+    return `<p><b>${status.account.display_name}</b> (${status.account.acct}): ${noteText}</p>`;
 }
 
 function renderMediaAttachment(media: Entity.Attachment): string {
