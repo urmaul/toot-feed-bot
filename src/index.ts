@@ -62,6 +62,10 @@ async function run() {
 			}
 		}
 
+		// const response = await subscriptionCient.client.getStatus('ARdDMjgx0bADtilSam')
+		// logger.debug(response.data)
+		// await matrix.sendHtmlText(subscription.roomId, renderMessage(response.data));
+
 		const reload = async () => {
 			const maxStatusId = await getMaxStatusId();
 

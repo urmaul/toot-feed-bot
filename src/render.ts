@@ -10,8 +10,8 @@ export function renderMessage(status: Entity.Status): string {
         `<summary><b>${status.account.display_name}` + (status.reblog ? ` ♻️ ${status.reblog.account.display_name}` : '') + `</b></summary>` +
         `<blockquote>` +
             `<p>id: <code>${status.id}</code><br>${status.uri.replace(/^https?:\/\//, '')}</p>` +
-            accountInfo(status) +
-            (status.reblog ? accountInfo(status.reblog) : '') +
+            accountInfo(status.account) +
+            (status.reblog ? accountInfo(status.reblog.account) : '') +
         `</blockquote>` +
         `</details>`;
 
@@ -45,11 +45,11 @@ export function unlinkMentions(content: string): string {
     return html.outerHTML;
 }
 
-function accountInfo(status: Entity.Status): string {
-    const noteHtml = parse(status.account.note);
-    const noteText = noteHtml.textContent;
+export function accountInfo(account: Entity.Account): string {
+    const noteHtml = parse(account.note);
+    const noteText = noteHtml.structuredText.replace(/\bhttps?:\/\//, '');
 
-    return `<p><b>${status.account.display_name}</b> (${status.account.acct}): ${noteText}</p>`;
+    return `<p><b>${account.display_name}</b> (${account.acct}): ${noteText}</p>`;
 }
 
 function renderMediaAttachment(media: Entity.Attachment): string {
