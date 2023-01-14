@@ -2,7 +2,7 @@ import { logger } from './logger';
 import { parse } from 'node-html-parser';
 import { Entity } from 'megalodon';
 
-const typeIcons = {'image': '🖼'};
+const typeIcons = {'image': '🖼', 'video': '🎞️'};
 
 export function renderMessage(status: Entity.Status): string {
     let title =
@@ -22,8 +22,8 @@ export function renderMessage(status: Entity.Status): string {
     if (status.media_attachments.length > 0) {
         blocks.push(
             `<details>` +
-            `<summary>${status.media_attachments.map(mediaIcon).join(" ")}</summary><br>` +
-            status.media_attachments.map(renderMediaAttachment).join("<br>") +
+            `<summary>${status.media_attachments.map(mediaIcon).join(" ")}</summary>` +
+            `<p>` + status.media_attachments.map(renderMediaAttachment).join("<br>") + `</p>` +
             `</details>`
         );
     }
