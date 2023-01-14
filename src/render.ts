@@ -22,7 +22,7 @@ export function renderMessage(status: Entity.Status): string {
     if (status.media_attachments.length > 0) {
         blocks.push(
             `<details>` +
-            `<summary>${status.media_attachments.map(mediaIcon).join(" ")}</summary>` +
+            `<summary>${status.media_attachments.map(mediaIcon).join(" ")}</summary><br>` +
             status.media_attachments.map(renderMediaAttachment).join("<br>") +
             `</details>`
         );
