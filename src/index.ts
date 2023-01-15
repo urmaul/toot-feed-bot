@@ -6,7 +6,7 @@ import { logger } from './logger';
 import { Subscription } from './subscription';
 import loadConfigs from './config';
 import { Pleroma } from 'megalodon';
-import { initStore } from './store';
+import { Store } from './store';
 
 const configs = loadConfigs();
 
@@ -44,40 +44,19 @@ async function run() {
 
 	let subscription: Subscription = configs.subscription;
 
-	const keyv = initStore(configs.store);
+	const store = new Store(configs.store);
 
 	if (subscription.accessToken) {
 		const subscriptionCient = initSourceClient(configs.source, subscription.accessToken);
-
-		const maxStatusIdKey = `maxStatusId:${subscription.roomId}`;
-
-		const getMaxStatusId = async () => {
-			try {
-				return await keyv.get(maxStatusIdKey);
-			} catch (error) {
-				logger.error(error);
-				// Fallback to no maxStatusId
-				return undefined;
-			}
-		}
 
 		// const response = await subscriptionCient.client.getStatus('ARdDMjgx0bADtilSam')
 		// logger.debug(response.data)
 		// await matrix.sendStatus(subscription.roomId, response.data);
 
-		const reload = async () => {
-			const maxStatusId = await getMaxStatusId();
-
-			const response = await subscriptionCient.client.getHomeTimeline({
-				limit: configs.app.statusLimit,
-				since_id: maxStatusId,
-			})
-
-			logger.debug(`${subscription.roomId}: Loaded ${response.data.length} statuses`);
-
-			let newMaxStatusId = maxStatusId;
+		const handleStatuses = async (statuses: Entity.Status[]) => {
+			let newMaxStatusId: string | undefined = undefined;
 			try {
-				for (const status of response.data) {
+				for (const status of statuses) {
 					const shouldSkip = 
 						(status.in_reply_to_account_id && status.in_reply_to_account_id !== status.account.id);
 						// || !status.reblog?.in_reply_to_id
@@ -94,13 +73,25 @@ async function run() {
 					}
 				}					
 			} catch (error) {
-				logger.error(error);
+				logger.error('Status Sending error', error);
 			}
 
-			// Update maxStatusId
-			if (newMaxStatusId !== maxStatusId) {
-				await keyv.set(maxStatusIdKey, newMaxStatusId);
+			if (newMaxStatusId !== undefined) {
+				await store.setMaxStatusId(subscription.roomId, newMaxStatusId);
 			}
+		}
+
+		const reload = async () => {
+			const since_id = await store.getMaxStatusId(subscription.roomId);
+
+			const response = await subscriptionCient.client.getHomeTimeline({
+				limit: configs.app.statusLimit,
+				since_id,
+			})
+
+			logger.debug(`${subscription.roomId}: Loaded ${response.data.length} statuses`);
+
+			await handleStatuses(response.data);
 		};
 
 		await reload();

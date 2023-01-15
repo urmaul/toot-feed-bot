@@ -1,6 +1,7 @@
 import { logger } from './logger';
 import Keyv from 'keyv';
 import CryptoJS from 'crypto-js';
+import { RoomId } from './types';
 
 // Data store
 
@@ -13,12 +14,30 @@ export interface StoreConfig {
     secret: string;
 }
 
-export function initStore(config: StoreConfig): Keyv {
-    const keyv = new Keyv(config.uri, {
-		serialize: (data) => CryptoJS.AES.encrypt(JSON.stringify(data), config.secret).toString(),
-		deserialize: (text) => JSON.parse(CryptoJS.AES.decrypt(text, config.secret).toString(CryptoJS.enc.Utf8))
-	});
-	keyv.on('error', err => logger.error('Connection Error', err));
+export class Store {
+    readonly keyv: Keyv;
 
-    return keyv;
+    constructor(config: StoreConfig) {
+        this.keyv = new Keyv(config.uri, {
+            serialize: (data) => CryptoJS.AES.encrypt(JSON.stringify(data), config.secret).toString(),
+            deserialize: (text) => JSON.parse(CryptoJS.AES.decrypt(text, config.secret).toString(CryptoJS.enc.Utf8))
+        });
+        this.keyv.on('error', err => logger.error('Store Error', err));
+    }
+
+    private maxStatusIdKey(roomId: RoomId): string {
+        return `maxStatusId:${roomId.value}`;
+    }
+    async getMaxStatusId(roomId: RoomId): Promise<string | undefined> {
+        try {
+            return await this.keyv.get(this.maxStatusIdKey(roomId));
+        } catch (error) {
+            logger.error(`Error while getting maxStatusId for ${roomId.value}`, error);
+            // Fallback to no maxStatusId
+            return undefined;
+        }
+    }
+    async setMaxStatusId(roomId: RoomId, newValue: string | undefined): Promise<void> {
+        await this.keyv.set(this.maxStatusIdKey(roomId), newValue);
+    }
 }
