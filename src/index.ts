@@ -5,7 +5,7 @@ import { initMatrixBot } from './matrix';
 import { logger } from './logger';
 import { Subscription } from './subscription';
 import loadConfigs from './config';
-import { Pleroma } from 'megalodon';
+import generator, { Pleroma, WebSocketInterface } from 'megalodon';
 import { Store } from './store';
 
 const configs = loadConfigs();
@@ -94,10 +94,19 @@ async function run() {
 			await handleStatuses(response.data);
 		};
 
-		await reload();
-		setInterval(reload, configs.app.interval * 1000);
-	}
+		const streamingClient = generator(configs.source.sns, `wss://${configs.source.hostname}`, subscription.accessToken);
+		const stream: WebSocketInterface = streamingClient.userSocket()
 
+		stream.on('connect', () => logger.debug(`Stream connected on ${subscription.roomId.value}`));
+		stream.on('update', (status: Entity.Status) => handleStatuses([status]));
+		stream.on('notification', (notification: Entity.Notification) => logger.debug(notification));
+		stream.on('error', (err: Error) => logger.error(`Stream error on ${subscription.roomId.value}`, err));
+		stream.on('heartbeat', () => logger.debug('heartbeat'));
+		stream.on('close', () => logger.warn('Stream closed'));
+		stream.on('parser-error', (err: Error) => logger.error(`Stream parser error on ${subscription.roomId.value}`, err));
+
+		await reload();
+	}
 }
 
 run();
