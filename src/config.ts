@@ -1,4 +1,5 @@
 import env from 'env-var';
+import { newRoomId } from './types';
 
 export default () => {
     const dataDir = env.get('APP_DATA_DIR').default('./data').asString();
@@ -29,7 +30,7 @@ export default () => {
             clientSecret: env.get('FEDIVERSE_CLIENT_SECRET').required().asString(),
         },
         subscription: {
-            roomId: env.get('SUBSCRIPTION_ROOM_ID').required().asString(),
+            roomId: newRoomId(env.get('SUBSCRIPTION_ROOM_ID').required().asString()),
             accessToken: env.get('SUBSCRIPTION_ACCESS_TOKEN').required().asString(),
         },
         matrix: {

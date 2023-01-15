@@ -7,6 +7,7 @@ import {
 } from 'matrix-bot-sdk';
 import { logger } from './logger';
 import { renderMessage } from './render';
+import { RoomId } from './types';
 
 
 export interface MatrixConfig {
@@ -24,9 +25,9 @@ export class MatrixBot {
 		this.client = client;
 	}
 
-	async sendStatus(roomId: string, status: Entity.Status): Promise<void> {
+	async sendStatus(roomId: RoomId, status: Entity.Status): Promise<void> {
 		const message = renderMessage(status);
-		await this.client.sendHtmlText(roomId, message);
+		await this.client.sendHtmlText(roomId.value, message);
 	}
 }
 
