@@ -6,6 +6,7 @@ import {
 	RustSdkCryptoStorageProvider,
 } from 'matrix-bot-sdk';
 import { logger } from './logger';
+import { renderMessage } from './render';
 
 
 export interface MatrixConfig {
@@ -16,12 +17,25 @@ export interface MatrixConfig {
     cryptoStorageDir: string;
 }
 
+export class MatrixBot {
+	readonly client: MatrixClient;
+
+	constructor(client: MatrixClient) {
+		this.client = client;
+	}
+
+	async sendStatus(roomId: string, status: Entity.Status): Promise<void> {
+		const message = renderMessage(status);
+		await this.client.sendHtmlText(roomId, message);
+	}
+}
+
 export interface MatrixController {
     reg: (url: string) => Promise<string>;
     auth: (code: string) => Promise<string>;
 }
 
-export async function initMatrixBot(config: MatrixConfig, controller: MatrixController): Promise<MatrixClient> {
+export async function initMatrixBot(config: MatrixConfig, controller: MatrixController): Promise<MatrixBot> {
 	// We'll want to make sure the bot doesn't have to do an initial sync every
 	// time it restarts, so we need to prepare a storage provider. Here we use
 	// a simple JSON database.
@@ -79,5 +93,5 @@ export async function initMatrixBot(config: MatrixConfig, controller: MatrixCont
 	// client up. This will start it syncing.
 	await matrix.start().then(() => logger.info('Matrix client started!'));
 
-	return matrix;
+	return new MatrixBot(matrix);
 }

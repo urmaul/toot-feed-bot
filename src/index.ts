@@ -4,7 +4,6 @@ import { initSourceClient } from './source';
 import { initMatrixBot } from './matrix';
 import { logger } from './logger';
 import { Subscription } from './subscription';
-import { renderMessage } from './render';
 import loadConfigs from './config';
 import { Pleroma } from 'megalodon';
 import { initStore } from './store';
@@ -64,7 +63,7 @@ async function run() {
 
 		// const response = await subscriptionCient.client.getStatus('ARdDMjgx0bADtilSam')
 		// logger.debug(response.data)
-		// await matrix.sendHtmlText(subscription.roomId, renderMessage(response.data));
+		// await matrix.sendStatus(subscription.roomId, response.data);
 
 		const reload = async () => {
 			const maxStatusId = await getMaxStatusId();
@@ -85,8 +84,7 @@ async function run() {
 						// || status.reblog
 					
 					if (!shouldSkip) {
-						const message = renderMessage(status);
-						await matrix.sendHtmlText(subscription.roomId, message);
+						await matrix.sendStatus(subscription.roomId, status);
 					} else {
 						logger.debug(`Skipping ${status.content}`);
 					}
