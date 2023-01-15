@@ -26,8 +26,24 @@ export class MatrixBot {
 	}
 
 	async sendStatus(roomId: RoomId, status: Entity.Status): Promise<void> {
-		const message = renderMessage(status);
-		await this.client.sendHtmlText(roomId.value, message);
+		try {
+			const message = renderMessage(status);
+			await this.client.sendHtmlText(roomId.value, message);
+		} catch (error) {
+			const retryAfterMs = (error as any).retryAfterMs;
+			if (retryAfterMs) {
+				// If error tells us to retry => wait and retry
+				logger.debug(`Sending status error. Waiting to retry after ${retryAfterMs}ms`);
+				await this.sleep(retryAfterMs);
+				return this.sendStatus(roomId, status);
+			} else {
+				throw error;
+			}
+		}
+	}
+
+	private async sleep(ms) {
+		return new Promise(resolve => setTimeout(resolve, ms));
 	}
 }
 

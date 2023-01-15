@@ -42,7 +42,7 @@ async function run() {
 		}
 	});
 
-	let subscription: Subscription = configs.subscription;
+	const subscription: Subscription = configs.subscription;
 
 	const store = new Store(configs.store);
 
@@ -73,7 +73,7 @@ async function run() {
 					}
 				}					
 			} catch (error) {
-				logger.error('Status Sending error', error);
+				logger.error('Status sending error', error);
 			}
 
 			if (newMaxStatusId !== undefined) {
