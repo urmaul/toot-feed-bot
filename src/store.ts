@@ -2,6 +2,7 @@ import { logger } from './logger';
 import Keyv from 'keyv';
 import CryptoJS from 'crypto-js';
 import { RoomId } from './types';
+import { Subscription } from './subscription';
 
 // Data store
 
@@ -16,13 +17,16 @@ export interface StoreConfig {
 
 export class Store {
     readonly keyv: Keyv;
+    readonly subscriptions: Subscription[];
 
-    constructor(config: StoreConfig) {
+    constructor(config: StoreConfig, subscriptions: Subscription[]) {
         this.keyv = new Keyv(config.uri, {
             serialize: (data) => CryptoJS.AES.encrypt(JSON.stringify(data), config.secret).toString(),
             deserialize: (text) => JSON.parse(CryptoJS.AES.decrypt(text, config.secret).toString(CryptoJS.enc.Utf8))
         });
         this.keyv.on('error', err => logger.error('Store Error', err));
+
+        this.subscriptions = subscriptions;
     }
 
     private maxStatusIdKey(roomId: RoomId): string {
@@ -39,5 +43,9 @@ export class Store {
     }
     async setMaxStatusId(roomId: RoomId, newValue: string | undefined): Promise<void> {
         await this.keyv.set(this.maxStatusIdKey(roomId), newValue);
+    }
+
+    async getAllSubscriptions(): Promise<Subscription[]> {
+        return Promise.resolve(this.subscriptions);
     }
 }

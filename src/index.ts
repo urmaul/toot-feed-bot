@@ -42,11 +42,19 @@ async function run() {
 		}
 	});
 
-	const subscription: Subscription = configs.subscription;
+	let configSubscriptions: Subscription[] = [];
+	if (configs.subscription.accessToken) {
+		configSubscriptions.push({
+			roomId: configs.subscription.roomId,
+			accessToken: configs.subscription.accessToken
+		});
+	}
 
-	const store = new Store(configs.store);
+	const store = new Store(configs.store, configSubscriptions);
 
-	if (subscription.accessToken) {
+	const subscriptions = await store.getAllSubscriptions();
+
+	for (const subscription of subscriptions) {
 		const subscriptionCient = initSourceClient(configs.source, subscription.accessToken);
 
 		// const response = await subscriptionCient.client.getStatus('ARdDMjgx0bADtilSam')
