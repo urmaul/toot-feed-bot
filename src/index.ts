@@ -7,6 +7,7 @@ import { Subscription } from './subscription';
 import loadConfigs from './config';
 import { Pleroma } from 'megalodon';
 import { Store } from './store';
+import { RoomId } from './types';
 
 const configs = loadConfigs();
 
@@ -52,60 +53,71 @@ async function run() {
 
 	const store = new Store(configs.store, configSubscriptions);
 
-	const subscriptions = await store.getAllSubscriptions();
+	let ongoing: Map<RoomId, NodeJS.Timer> = new Map();
 
-	for (const subscription of subscriptions) {
-		const subscriptionCient = initSourceClient(configs.source, subscription.accessToken);
+	const reinit = async () => {
+		const subscriptions = await store.getAllSubscriptions();
 
-		// const response = await subscriptionCient.client.getStatus('ARdDMjgx0bADtilSam')
-		// logger.debug(response.data)
-		// await matrix.sendStatus(subscription.roomId, response.data);
+		for (const subscription of subscriptions) {
+			if (ongoing.has(subscription.roomId)) {
+				break;
+			}
+			logger.debug(`Starting subscription for ${subscription.roomId.value}`);
 
-		const handleStatuses = async (statuses: Entity.Status[]) => {
-			let newMaxStatusId: string | undefined = undefined;
-			try {
-				for (const status of statuses) {
-					const shouldSkip = 
-						(status.in_reply_to_account_id && status.in_reply_to_account_id !== status.account.id);
-						// || !status.reblog?.in_reply_to_id
-						// || status.reblog
-					
-					if (!shouldSkip) {
-						await matrix.sendStatus(subscription.roomId, status);
-					} else {
-						logger.debug(`Skipping ${status.content}`);
+			const subscriptionCient = initSourceClient(configs.source, subscription.accessToken);
+
+			// const response = await subscriptionCient.client.getStatus('ARdDMjgx0bADtilSam')
+			// logger.debug(response.data)
+			// await matrix.sendStatus(subscription.roomId, response.data);
+
+			const handleStatuses = async (statuses: Entity.Status[]) => {
+				let newMaxStatusId: string | undefined = undefined;
+				try {
+					for (const status of statuses) {
+						const shouldSkip = 
+							(status.in_reply_to_account_id && status.in_reply_to_account_id !== status.account.id);
+							// || !status.reblog?.in_reply_to_id
+							// || status.reblog
+						
+						if (!shouldSkip) {
+							await matrix.sendStatus(subscription.roomId, status);
+						} else {
+							logger.debug(`Skipping ${status.content}`);
+						}
+
+						if (newMaxStatusId === undefined || status.id > newMaxStatusId) {
+							newMaxStatusId = status.id;
+						}
 					}
+				} catch (error) {
+					logger.error('Status sending error', error);
+				}
 
-					if (newMaxStatusId === undefined || status.id > newMaxStatusId) {
-						newMaxStatusId = status.id;
-					}
-				}					
-			} catch (error) {
-				logger.error('Status sending error', error);
+				if (newMaxStatusId !== undefined) {
+					await store.setMaxStatusId(subscription.roomId, newMaxStatusId);
+				}
 			}
 
-			if (newMaxStatusId !== undefined) {
-				await store.setMaxStatusId(subscription.roomId, newMaxStatusId);
-			}
+			const reload = async () => {
+				const since_id = await store.getMaxStatusId(subscription.roomId);
+
+				const response = await subscriptionCient.client.getHomeTimeline({
+					limit: configs.app.statusLimit,
+					since_id,
+				})
+
+				logger.debug(`${subscription.roomId}: Loaded ${response.data.length} statuses`);
+
+				await handleStatuses(response.data);
+			};
+
+			ongoing.set(subscription.roomId, setInterval(reload, configs.app.interval * 1000));
+			await reload();
 		}
-
-		const reload = async () => {
-			const since_id = await store.getMaxStatusId(subscription.roomId);
-
-			const response = await subscriptionCient.client.getHomeTimeline({
-				limit: configs.app.statusLimit,
-				since_id,
-			})
-
-			logger.debug(`${subscription.roomId}: Loaded ${response.data.length} statuses`);
-
-			await handleStatuses(response.data);
-		};
-
-		await reload();
-		setInterval(reload, configs.app.interval * 1000);
 	}
 
+	await reinit();
+	setInterval(reinit, configs.app.interval * 1000);
 }
 
 run();
