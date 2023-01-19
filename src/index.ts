@@ -5,7 +5,7 @@ import { initMatrixBot } from './matrix';
 import { logger } from './logger';
 import { Subscription } from './subscription';
 import loadConfigs from './config';
-import { Pleroma } from 'megalodon';
+import generator, { Pleroma, WebSocketInterface } from 'megalodon';
 import { Store } from './store';
 import { RoomId } from './types';
 
@@ -53,7 +53,7 @@ async function run() {
 
 	const store = new Store(configs.store, configSubscriptions);
 
-	let ongoing: Map<RoomId, NodeJS.Timer> = new Map();
+	let ongoing: Map<RoomId, WebSocketInterface> = new Map();
 
 	const reinit = async () => {
 		const subscriptions = await store.getAllSubscriptions();
@@ -111,8 +111,26 @@ async function run() {
 				await handleStatuses(response.data);
 			};
 
-			ongoing.set(subscription.roomId, setInterval(reload, configs.app.interval * 1000));
+			const streamingClient = generator(configs.source.sns, `wss://${configs.source.hostname}`, subscription.accessToken);
+			const stream: WebSocketInterface = streamingClient.userSocket()
+			ongoing.set(subscription.roomId, stream);
+
+			stream.on('connect', () => logger.debug(`Stream connected on ${subscription.roomId.value}`));
+			stream.on('update', (status: Entity.Status) => handleStatuses([status]));
+			stream.on('notification', (notification: Entity.Notification) => {
+				// TODO: forward notifications
+				logger.debug('Got notification', notification)
+			});
+			stream.on('error', (err: Error) => logger.error(`Stream error on ${subscription.roomId.value}`, err));
+			stream.on('heartbeat', () => logger.debug(`Heartbeat on ${subscription.roomId.value}`));
+			stream.on('close', () => {
+				logger.info(`Stream closed on ${subscription.roomId.value}`)
+				ongoing.delete(subscription.roomId);
+			});
+			stream.on('parser-error', (err: Error) => logger.warn(`Stream parser error on ${subscription.roomId.value}`, err));
+
 			await reload();
+			// TODO: reload notifications
 		}
 	}
 
