@@ -1,6 +1,6 @@
 'use strict';
 
-import { initSourceClient } from './source';
+import { initSourceClient, initStreamingClient, initSubscriptionClient } from './source';
 import { initMatrixBot } from './matrix';
 import { logger } from './logger';
 import { Subscription } from './subscription';
@@ -12,15 +12,14 @@ import { RoomId } from './types';
 const configs = loadConfigs();
 
 async function run() {
-	const source = initSourceClient(configs.source, null);
-
 	// ----- Matrix bot
 
 	const matrix = await initMatrixBot(configs.matrix, {
 		reg: (url: string) => {
 			try {
 				const urlObject = new URL(url);
-				if (urlObject.hostname === configs.source.hostname) {
+				if (urlObject.hostname === configs.source.ref.hostname) {
+					const source = initSourceClient(configs.source);
 					const pleromaClient = source.client as Pleroma
 					return pleromaClient.generateAuthUrl(
 						source.config.clientId,
@@ -28,13 +27,14 @@ async function run() {
 						{scope: ['read']}
 					)
 				} else {
-					return Promise.resolve(`Currently only https://${configs.source.hostname} is supported`);
+					return Promise.resolve(`Currently only https://${configs.source.ref.hostname} is supported`);
 				}
 			} catch (error) {
 				return Promise.resolve('Usage: <pre>!reg &lt;FediverseServerUrl&gt;</pre>');
 			}
 		},
 		auth: (code: string) => {
+			const source = initSourceClient(configs.source);
 			return source.client.fetchAccessToken(
 				source.config.clientId,
 				source.config.clientSecret,
@@ -64,7 +64,7 @@ async function run() {
 			}
 			logger.debug(`Starting subscription for ${subscription.roomId.value}`);
 
-			const subscriptionCient = initSourceClient(configs.source, subscription.accessToken);
+			const subscriptionCient = initSubscriptionClient(configs.source.ref, subscription.accessToken);
 
 			// const response = await subscriptionCient.client.getStatus('ARdDMjgx0bADtilSam')
 			// logger.debug(response.data)
@@ -101,7 +101,7 @@ async function run() {
 			const reload = async () => {
 				const since_id = await store.getMaxStatusId(subscription.roomId);
 
-				const response = await subscriptionCient.client.getHomeTimeline({
+				const response = await subscriptionCient.getHomeTimeline({
 					limit: configs.app.statusLimit,
 					since_id,
 				})
@@ -111,8 +111,7 @@ async function run() {
 				await handleStatuses(response.data);
 			};
 
-			const streamingClient = generator(configs.source.sns, `wss://${configs.source.hostname}`, subscription.accessToken);
-			const stream: WebSocketInterface = streamingClient.userSocket()
+			const stream = initStreamingClient(configs.source.ref, subscription.accessToken);
 			ongoing.set(subscription.roomId, stream);
 
 			stream.on('connect', () => logger.debug(`Stream connected on ${subscription.roomId.value}`));

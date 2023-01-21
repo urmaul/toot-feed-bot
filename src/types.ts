@@ -1,3 +1,8 @@
+export interface SourceRef {
+    sns: 'pleroma';
+    hostname: string;
+}
+
 export interface RoomId {
     kind: 'roomId';
     value: string;
