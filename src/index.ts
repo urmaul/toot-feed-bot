@@ -5,7 +5,7 @@ import { initMatrixBot } from './matrix';
 import { logger } from './logger';
 import { Subscription } from './subscription';
 import loadConfigs from './config';
-import generator, { Pleroma, WebSocketInterface } from 'megalodon';
+import { Pleroma, WebSocketInterface } from 'megalodon';
 import { Store } from './store';
 import { RoomId } from './types';
 

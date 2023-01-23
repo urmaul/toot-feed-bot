@@ -20,9 +20,15 @@ export interface MatrixConfig {
 
 export class MatrixBot {
 	readonly client: MatrixClient;
+	readonly controller: MatrixController;
 
-	constructor(client: MatrixClient) {
+	constructor(client: MatrixClient, controller: MatrixController) {
 		this.client = client;
+		this.controller = controller
+
+		// We also want to make sure we can receive events - this is where we will
+		// handle our command.
+		this.client.on('room.message', this.handleCommand.bind(this));
 	}
 
 	async sendStatus(roomId: RoomId, status: Entity.Status): Promise<void> {
@@ -45,6 +51,43 @@ export class MatrixBot {
 	private async sleep(ms) {
 		return new Promise(resolve => setTimeout(resolve, ms));
 	}
+
+	private async handleCommand(roomId, event) {
+		logger.debug(`${roomId} ${JSON.stringify(event)}`)
+
+		// Don't handle events that don't have contents (they were probably redacted)
+		if (!event['content']) return;
+
+		// Don't handle non-text events
+		if (event['content']['msgtype'] !== 'm.text') return;
+
+		// Filter out events sent by the bot itself.
+		if (event['sender'] === await this.client.getUserId()) return;
+
+		// Make sure that the event looks like a command we're expecting
+		const body = event['content']['body'];
+		if (!body) return;
+
+		if (body.startsWith('!reg')) {
+			const url = body.replace(/!reg +/, '')
+			const replyBody = await this.controller.reg(url);
+			logger.debug(`Replying with ${replyBody}`);
+			const reply = RichReply.createFor(roomId, event, replyBody, replyBody);
+			reply['msgtype'] = 'm.notice';
+			this.client.sendMessage(roomId, reply);
+			return;
+		}
+
+		if (body.startsWith('!auth')) {
+			const code = body.replace(/!auth +/, '')
+			const replyBody = await this.controller.auth(code);
+			logger.debug(`Replying with ${replyBody}`);
+			const reply = RichReply.createFor(roomId, event, replyBody, replyBody);
+			reply['msgtype'] = 'm.notice';
+			this.client.sendMessage(roomId, reply);
+			return;
+		}
+	}
 }
 
 export interface MatrixController {
@@ -63,52 +106,9 @@ export async function initMatrixBot(config: MatrixConfig, controller: MatrixCont
 	const matrix = new MatrixClient(config.serverUrl, config.accessToken, storage, crypto);
 	AutojoinRoomsMixin.setupOnClient(matrix);
 
-	// We also want to make sure we can receive events - this is where we will
-	// handle our command.
-	matrix.on('room.message', handleCommand);
-
-	const botUserId = await matrix.getUserId();
-
-	async function handleCommand(roomId, event) {
-		logger.debug(`${roomId} ${JSON.stringify(event)}`)
-
-		// Don't handle events that don't have contents (they were probably redacted)
-		if (!event['content']) return;
-
-		// Don't handle non-text events
-		if (event['content']['msgtype'] !== 'm.text') return;
-
-		// Filter out events sent by the bot itself.
-		if (event['sender'] === botUserId) return;
-
-		// Make sure that the event looks like a command we're expecting
-		const body = event['content']['body'];
-		if (!body) return;
-
-		if (body.startsWith('!reg')) {
-			const url = body.replace(/!reg +/, '')
-			const replyBody = await controller.reg(url);
-			logger.debug(`Replying with ${replyBody}`);
-			const reply = RichReply.createFor(roomId, event, replyBody, replyBody);
-			reply['msgtype'] = 'm.notice';
-			matrix.sendMessage(roomId, reply);
-			return;
-		}
-
-		if (body.startsWith('!auth')) {
-			const code = body.replace(/!auth +/, '')
-			const replyBody = await controller.auth(code);
-			logger.debug(`Replying with ${replyBody}`);
-			const reply = RichReply.createFor(roomId, event, replyBody, replyBody);
-			reply['msgtype'] = 'm.notice';
-			matrix.sendMessage(roomId, reply);
-			return;
-		}
-	}
-
 	// Now that the client is all set up and the event handler is registered, start the
 	// client up. This will start it syncing.
 	await matrix.start().then(() => logger.info('Matrix client started!'));
 
-	return new MatrixBot(matrix);
+	return new MatrixBot(matrix, controller);
 }
