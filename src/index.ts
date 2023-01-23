@@ -14,32 +14,40 @@ const configs = loadConfigs();
 async function run() {
 	// ----- Matrix bot
 
-	const matrix = await initMatrixBot(configs.matrix, {
-		reg: (url: string) => {
-			try {
-				const urlObject = new URL(url);
-				if (urlObject.hostname === configs.source.ref.hostname) {
-					const source = initSourceClient(configs.source);
-					const pleromaClient = source.client as Pleroma
-					return pleromaClient.generateAuthUrl(
-						source.config.clientId,
-						source.config.clientSecret,
-						{scope: ['read']}
-					)
-				} else {
-					return Promise.resolve(`Currently only https://${configs.source.ref.hostname} is supported`);
-				}
-			} catch (error) {
-				return Promise.resolve('Usage: <pre>!reg &lt;FediverseServerUrl&gt;</pre>');
+	const matrix = await initMatrixBot(configs.matrix);
+
+	matrix.onCommand('reg', (url: string) => {
+		try {
+			const urlObject = new URL(url);
+			if (urlObject.hostname === configs.source.ref.hostname) {
+				const source = initSourceClient(configs.source);
+				const pleromaClient = source.client as Pleroma
+				return pleromaClient.generateAuthUrl(
+					source.config.clientId,
+					source.config.clientSecret,
+					{scope: ['read']}
+				)
+			} else {
+				return Promise.resolve(`Currently only https://${configs.source.ref.hostname} is supported`);
 			}
-		},
-		auth: (code: string) => {
-			const source = initSourceClient(configs.source);
-			return source.client.fetchAccessToken(
+		} catch (error) {
+			return Promise.resolve('Usage: <pre>!reg &lt;FediverseServerUrl&gt;</pre>');
+		}
+	});
+
+	matrix.onCommand('auth', async (code: string) => {
+		const source = initSourceClient(configs.source);
+		try {
+			const accessToken = await source.client.fetchAccessToken(
 				source.config.clientId,
 				source.config.clientSecret,
 				code
-			).then(JSON.stringify)
+			);
+			return JSON.stringify(accessToken);
+
+		} catch (error) {
+			const responseError = (error as any).response.data.error;
+			return responseError ? `${responseError}` : `${error}`;
 		}
 	});
 
@@ -106,7 +114,7 @@ async function run() {
 					since_id,
 				})
 
-				logger.debug(`${subscription.roomId}: Loaded ${response.data.length} statuses`);
+				logger.debug(`${subscription.roomId.value}: Loaded ${response.data.length} statuses`);
 
 				await handleStatuses(response.data);
 			};

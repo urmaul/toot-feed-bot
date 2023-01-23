@@ -20,14 +20,12 @@ export interface MatrixConfig {
 
 export class MatrixBot {
 	readonly client: MatrixClient;
-	readonly controller: MatrixController;
+	commandHandlers: Map<string, (body: string) => Promise<string>>;
 
-	constructor(client: MatrixClient, controller: MatrixController) {
+	constructor(client: MatrixClient) {
 		this.client = client;
-		this.controller = controller
+		this.commandHandlers = new Map();
 
-		// We also want to make sure we can receive events - this is where we will
-		// handle our command.
 		this.client.on('room.message', this.handleCommand.bind(this));
 	}
 
@@ -68,34 +66,31 @@ export class MatrixBot {
 		const body = event['content']['body'];
 		if (!body) return;
 
-		if (body.startsWith('!reg')) {
-			const url = body.replace(/!reg +/, '')
-			const replyBody = await this.controller.reg(url);
-			logger.debug(`Replying with ${replyBody}`);
-			const reply = RichReply.createFor(roomId, event, replyBody, replyBody);
-			reply['msgtype'] = 'm.notice';
-			this.client.sendMessage(roomId, reply);
-			return;
-		}
+		const matches = body.match(/^!([a-z]+)\b *(.*)/s);
+		if (matches) {
+			const commandName = matches[1];
+			const commandBody = matches[2];
+			const handler = this.commandHandlers.get(commandName);
+			
+			if (handler) {
+				const replyBody = await handler(commandBody);
+				const reply = RichReply.createFor(roomId, event, replyBody, replyBody);
+				reply['msgtype'] = 'm.notice';
+				this.client.sendMessage(roomId, reply);
+	
+			} else {
+				logger.debug(`Received unknown command ${commandName}`);
+			}
 
-		if (body.startsWith('!auth')) {
-			const code = body.replace(/!auth +/, '')
-			const replyBody = await this.controller.auth(code);
-			logger.debug(`Replying with ${replyBody}`);
-			const reply = RichReply.createFor(roomId, event, replyBody, replyBody);
-			reply['msgtype'] = 'm.notice';
-			this.client.sendMessage(roomId, reply);
-			return;
 		}
+	}
+
+	onCommand(command: string, handler: (body: string) => Promise<string>): void {
+		this.commandHandlers.set(command, handler);
 	}
 }
 
-export interface MatrixController {
-    reg: (url: string) => Promise<string>;
-    auth: (code: string) => Promise<string>;
-}
-
-export async function initMatrixBot(config: MatrixConfig, controller: MatrixController): Promise<MatrixBot> {
+export async function initMatrixBot(config: MatrixConfig): Promise<MatrixBot> {
 	// We'll want to make sure the bot doesn't have to do an initial sync every
 	// time it restarts, so we need to prepare a storage provider. Here we use
 	// a simple JSON database.
@@ -110,5 +105,5 @@ export async function initMatrixBot(config: MatrixConfig, controller: MatrixCont
 	// client up. This will start it syncing.
 	await matrix.start().then(() => logger.info('Matrix client started!'));
 
-	return new MatrixBot(matrix, controller);
+	return new MatrixBot(matrix);
 }
