@@ -47,7 +47,7 @@ describe('render', () => {
             followers_count: 0,
             following_count: 0,
             statuses_count: 1,
-            note: '<p>John Mastodon, a mammal<br/><a href="https://mastodon.test/@john"><span>https://</span><span>mastodon.test/@john</span><span></span></a></p>',
+            note: '<p>John Mastodon, a mammal<br/><a href="https://mastodon.test/@john"><span>https://</span><span>mastodon.test/@john</span><span></span></a><br/><a href="https://johnmastodon.test/">https://johnmastodon.test/</a></p>',
             url: 'https://mastodon.test/@john',
             avatar: '',
             avatar_static: '',
@@ -58,7 +58,7 @@ describe('render', () => {
             fields: [],
             bot: false,
         };
-        const expected = '<p><b>John Mastodon</b> (john@mastodon.test): John Mastodon, a mammal\nmastodon.test/@john</p>';
+        const expected = '<p><b>John Mastodon</b> (john@mastodon.test): John Mastodon, a mammal\nmastodon.test/@john\njohnmastodon.test/</p>';
         const actual = accountInfo(account);
         expect(actual).to.equal(expected);
     });

@@ -47,7 +47,7 @@ export function unlinkMentions(content: string): string {
 
 export function accountInfo(account: Entity.Account): string {
     const noteHtml = parse(account.note);
-    const noteText = noteHtml.structuredText.replace(/\bhttps?:\/\//, '');
+    const noteText = noteHtml.structuredText.replace(/\bhttps?:\/\//g, '');
 
     return `<p><b>${account.display_name}</b> (${account.acct}): ${noteText}</p>`;
 }
