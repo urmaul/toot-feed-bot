@@ -12,6 +12,16 @@ import { RoomId } from './types';
 const configs = loadConfigs();
 
 async function run() {
+	let configSubscriptions: Subscription[] = [];
+	if (configs.subscription.accessToken) {
+		configSubscriptions.push({
+			roomId: configs.subscription.roomId,
+			accessToken: configs.subscription.accessToken
+		});
+	}
+
+	const store = new Store(configs.store, configSubscriptions);
+
 	// ----- Matrix bot
 
 	const matrix = await initMatrixBot(configs.matrix);
@@ -44,22 +54,33 @@ async function run() {
 				code
 			);
 			return JSON.stringify(accessToken);
-
 		} catch (error) {
 			const responseError = (error as any).response.data.error;
 			return responseError ? `${responseError}` : `${error}`;
 		}
 	});
 
-	let configSubscriptions: Subscription[] = [];
-	if (configs.subscription.accessToken) {
-		configSubscriptions.push({
-			roomId: configs.subscription.roomId,
-			accessToken: configs.subscription.accessToken
-		});
-	}
+	matrix.onCommand('retrieve', async (statusId: string, roomId: RoomId) => {
+		const subscription = await store.getSubscription(roomId);
 
-	const store = new Store(configs.store, configSubscriptions);
+		if (subscription) {
+			try {
+				const source = initSubscriptionClient(configs.source.ref, subscription.accessToken);
+				const response = await source.getStatus(statusId)
+				logger.debug(response.data)
+				await matrix.sendStatus(roomId, response.data);
+
+				return undefined;
+
+			} catch (error) {
+				const responseError = (error as any).response.data.error;
+				return responseError ? `${responseError}` : `${error}`;
+			}
+
+		} else {
+			return 'Error: you need to log in first';
+		}
+	});
 
 	let ongoing: Map<RoomId, WebSocketInterface> = new Map();
 
@@ -74,9 +95,6 @@ async function run() {
 
 			const subscriptionCient = initSubscriptionClient(configs.source.ref, subscription.accessToken);
 
-			// const response = await subscriptionCient.client.getStatus('ARdDMjgx0bADtilSam')
-			// logger.debug(response.data)
-			// await matrix.sendStatus(subscription.roomId, response.data);
 
 			const handleStatuses = async (statuses: Entity.Status[]) => {
 				let newMaxStatusId: string | undefined = undefined;

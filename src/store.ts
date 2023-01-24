@@ -48,4 +48,9 @@ export class Store {
     async getAllSubscriptions(): Promise<Subscription[]> {
         return Promise.resolve(this.subscriptions);
     }
+
+    async getSubscription(roomId: RoomId): Promise<Subscription | undefined> {
+        const subscription = this.subscriptions.find(s => s.roomId.value == roomId.value);
+        return Promise.resolve(subscription);
+    }
 }

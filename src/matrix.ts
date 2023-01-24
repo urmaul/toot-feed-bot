@@ -5,9 +5,10 @@ import {
 	RichReply,
 	RustSdkCryptoStorageProvider,
 } from 'matrix-bot-sdk';
+import { type } from 'os';
 import { logger } from './logger';
 import { renderMessage } from './render';
-import { RoomId } from './types';
+import { newRoomId, RoomId } from './types';
 
 
 export interface MatrixConfig {
@@ -18,9 +19,11 @@ export interface MatrixConfig {
     cryptoStorageDir: string;
 }
 
+type CommandHandler = (body: string, roomId: RoomId) => Promise<string | undefined>
+
 export class MatrixBot {
 	readonly client: MatrixClient;
-	commandHandlers: Map<string, (body: string) => Promise<string>>;
+	commandHandlers: Map<string, CommandHandler>;
 
 	constructor(client: MatrixClient) {
 		this.client = client;
@@ -73,10 +76,12 @@ export class MatrixBot {
 			const handler = this.commandHandlers.get(commandName);
 			
 			if (handler) {
-				const replyBody = await handler(commandBody);
-				const reply = RichReply.createFor(roomId, event, replyBody, replyBody);
-				reply['msgtype'] = 'm.notice';
-				this.client.sendMessage(roomId, reply);
+				const replyBody = await handler(commandBody, newRoomId(roomId));
+				if (replyBody) {
+					const reply = RichReply.createFor(roomId, event, replyBody, replyBody);
+					reply['msgtype'] = 'm.notice';
+					this.client.sendMessage(roomId, reply);
+				}
 	
 			} else {
 				logger.debug(`Received unknown command ${commandName}`);
@@ -85,7 +90,7 @@ export class MatrixBot {
 		}
 	}
 
-	onCommand(command: string, handler: (body: string) => Promise<string>): void {
+	onCommand(command: string, handler: CommandHandler): void {
 		this.commandHandlers.set(command, handler);
 	}
 }
