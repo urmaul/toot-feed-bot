@@ -11,6 +11,13 @@ describe('render', () => {
             const actual = unlinkMentions(input);
             expect(actual).to.equal(expected, 'Links in user mentions and hashtags are replaced with <em>');
         });
+
+        it('should also delete links from pleroma-style hashtags', () => {
+            const input = '<p>Check <a href="https://mastodon.test/tags/hashtag" class="hashtag">#<span>hashtag</span></a></p>';
+            const expected = '<p>Check <em>#<span>hashtag</span></em></p>';
+            const actual = unlinkMentions(input);
+            expect(actual).to.equal(expected);
+        });
     });
 
     specify('renderPoll', () => {

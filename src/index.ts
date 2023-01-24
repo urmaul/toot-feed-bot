@@ -67,7 +67,7 @@ async function run() {
 			try {
 				const source = initSubscriptionClient(configs.source.ref, subscription.accessToken);
 				const response = await source.getStatus(statusId)
-				logger.debug(response.data)
+				logger.debug('Retrieved status', response.data)
 				await matrix.sendStatus(roomId, response.data);
 
 				return undefined;

@@ -39,7 +39,7 @@ export function renderMessage(status: Entity.Status): string {
 export function unlinkMentions(content: string): string {
     const html = parse(content);
     html
-        .querySelectorAll('a[rel="tag"],a.mention')
+        .querySelectorAll('a[rel="tag"],a.mention,a.hashtag')
         .forEach((el) => el.replaceWith(`<em>${el.innerHTML}</em>`));
 
     return html.outerHTML;
