@@ -7,7 +7,7 @@ import {
 } from 'matrix-bot-sdk';
 import { type } from 'os';
 import { logger } from './logger';
-import { renderMessage } from './render';
+import { renderNotification, renderStatus } from './render';
 import { newRoomId, RoomId } from './types';
 
 
@@ -34,7 +34,7 @@ export class MatrixBot {
 
 	async sendStatus(roomId: RoomId, status: Entity.Status): Promise<void> {
 		try {
-			const message = renderMessage(status);
+			const message = renderStatus(status);
 			await this.client.sendHtmlText(roomId.value, message);
 		} catch (error) {
 			const retryAfterMs = (error as any).retryAfterMs;
@@ -43,6 +43,25 @@ export class MatrixBot {
 				logger.debug(`Sending status error. Waiting to retry after ${retryAfterMs}ms`);
 				await this.sleep(retryAfterMs);
 				return this.sendStatus(roomId, status);
+			} else {
+				throw error;
+			}
+		}
+	}
+
+	async sendNotification(roomId: RoomId, notification: Entity.Notification): Promise<void> {
+		try {
+			const message = renderNotification(notification);
+			if (message) {
+				await this.client.sendHtmlText(roomId.value, message);
+			}
+		} catch (error) {
+			const retryAfterMs = (error as any).retryAfterMs;
+			if (retryAfterMs) {
+				// If error tells us to retry => wait and retry
+				logger.debug(`Sending notification error. Waiting to retry after ${retryAfterMs}ms`);
+				await this.sleep(retryAfterMs);
+				return this.sendNotification(roomId, notification);
 			} else {
 				throw error;
 			}

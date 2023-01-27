@@ -4,7 +4,7 @@ import { Entity } from 'megalodon';
 
 const typeIcons = {'image': '🖼', 'video': '🎞️'};
 
-export function renderMessage(status: Entity.Status): string {
+export function renderStatus(status: Entity.Status): string {
     let title =
         `<details>` +
         `<summary><b>${status.account.display_name}` + (status.reblog ? ` ♻️ ${status.reblog.account.display_name}` : '') + `</b></summary>` +
@@ -74,4 +74,27 @@ export function renderPoll(poll: Entity.Poll): string {
             return `<br>${optionEmoji} ${option.title}${votesLine}`
         }
     ).join('');
+}
+
+export function renderNotification(notification: Entity.Notification): string | undefined {
+    if (notification.type == 'poll_expired' && notification.status) {
+        return '<p>🔔🗳️ Poll expired:</p>' +
+            renderStatus(notification.status);
+    } else if (notification.type == 'follow' && notification.account) {
+        return `<details>` +
+            `<summary>🔔🧑 <b>${notification.account.display_name}</b> follows you</summary>` +
+            `<blockquote>` +
+                accountInfo(notification.account) +
+            `</blockquote>` +
+            `</details>`;
+    } else if (notification.type == 'mention' && notification.account && notification.status) {
+        return `<p>🔔💬 <b>${notification.account.display_name}</b> mentioned you:</p>` +
+            renderStatus(notification.status);
+    } else if (notification.type == 'favourite' && notification.account && notification.status) {
+        return `<p>🔔❤️ <b>${notification.account.display_name}</b> favourited your toot:</p>` +
+            renderStatus(notification.status);
+    } else {
+        logger.debug(`Unknown notification type ${notification.type}`, notification);
+        return undefined;
+    }
 }

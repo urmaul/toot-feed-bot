@@ -124,7 +124,7 @@ async function run() {
 				}
 			}
 
-			const reload = async () => {
+			const reloadStatuses = async () => {
 				const since_id = await store.getMaxStatusId(subscription.roomId);
 
 				const response = await subscriptionCient.getHomeTimeline({
@@ -137,15 +137,43 @@ async function run() {
 				await handleStatuses(response.data);
 			};
 
+			const handleNotifications = async (notifications: Entity.Notification[]) => {
+				// let newMaxStatusId: string | undefined = undefined;
+				try {
+					for (const notification of notifications) {
+						await matrix.sendNotification(subscription.roomId, notification);
+
+						// if (newMaxStatusId === undefined || status.id > newMaxStatusId) {
+						// 	newMaxStatusId = status.id;
+						// }
+					}
+				} catch (error) {
+					logger.error('Notification sending error', error);
+				}
+
+				// if (newMaxStatusId !== undefined) {
+				// 	await store.setMaxStatusId(subscription.roomId, newMaxStatusId);
+				// }
+			}
+
+			const reloadNotifications = async () => {
+				// const since_id = await store.getMaxStatusId(subscription.roomId);
+
+				const response = await subscriptionCient.getNotifications({
+					// since_id,
+				})
+
+				logger.debug(`${subscription.roomId.value}: Loaded ${response.data.length} notifications`);
+
+				await handleNotifications(response.data);
+			};
+
 			const stream = initStreamingClient(configs.source.ref, subscription.accessToken);
 			ongoing.set(subscription.roomId, stream);
 
 			stream.on('connect', () => logger.debug(`Stream connected on ${subscription.roomId.value}`));
 			stream.on('update', (status: Entity.Status) => handleStatuses([status]));
-			stream.on('notification', (notification: Entity.Notification) => {
-				// TODO: forward notifications
-				logger.debug('Got notification', notification)
-			});
+			stream.on('notification', (notification: Entity.Notification) => handleNotifications([notification]));
 			stream.on('error', (err: Error) => logger.error(`Stream error on ${subscription.roomId.value}`, err));
 			stream.on('heartbeat', () => logger.debug(`Heartbeat on ${subscription.roomId.value}`));
 			stream.on('close', () => {
@@ -154,8 +182,8 @@ async function run() {
 			});
 			stream.on('parser-error', (err: Error) => logger.warn(`Stream parser error on ${subscription.roomId.value}`, err));
 
-			await reload();
-			// TODO: reload notifications
+			await reloadStatuses();
+			// await reloadNotifications();
 		}
 	}
 
