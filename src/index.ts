@@ -138,30 +138,27 @@ async function run() {
 			};
 
 			const handleNotifications = async (notifications: Entity.Notification[]) => {
-				// let newMaxStatusId: string | undefined = undefined;
+				let newMaxNotificationId: string | undefined = undefined;
 				try {
 					for (const notification of notifications) {
 						await matrix.sendNotification(subscription.roomId, notification);
 
-						// if (newMaxStatusId === undefined || status.id > newMaxStatusId) {
-						// 	newMaxStatusId = status.id;
-						// }
+						if (newMaxNotificationId === undefined || notification.id > newMaxNotificationId) {
+							newMaxNotificationId = notification.id;
+						}
 					}
 				} catch (error) {
 					logger.error('Notification sending error', error);
 				}
 
-				// if (newMaxStatusId !== undefined) {
-				// 	await store.setMaxStatusId(subscription.roomId, newMaxStatusId);
-				// }
+				if (newMaxNotificationId !== undefined) {
+					await store.setMaxNotificationId(subscription.roomId, newMaxNotificationId);
+				}
 			}
 
 			const reloadNotifications = async () => {
-				// const since_id = await store.getMaxStatusId(subscription.roomId);
-
-				const response = await subscriptionCient.getNotifications({
-					// since_id,
-				})
+				const since_id = await store.getMaxNotificationId(subscription.roomId);
+				const response = await subscriptionCient.getNotifications({ since_id });
 
 				logger.debug(`${subscription.roomId.value}: Loaded ${response.data.length} notifications`);
 
@@ -183,7 +180,7 @@ async function run() {
 			stream.on('parser-error', (err: Error) => logger.warn(`Stream parser error on ${subscription.roomId.value}`, err));
 
 			await reloadStatuses();
-			// await reloadNotifications();
+			await reloadNotifications();
 		}
 	}
 

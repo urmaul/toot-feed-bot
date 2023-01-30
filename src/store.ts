@@ -45,6 +45,22 @@ export class Store {
         await this.keyv.set(this.maxStatusIdKey(roomId), newValue);
     }
 
+    private maxNotificationIdKey(roomId: RoomId): string {
+        return `maxNotificationId:${roomId.value}`;
+    }
+    async getMaxNotificationId(roomId: RoomId): Promise<string | undefined> {
+        try {
+            return await this.keyv.get(this.maxNotificationIdKey(roomId));
+        } catch (error) {
+            logger.error(`Error while getting maxNotificationId for ${roomId.value}`, error);
+            // Fallback to no maxNotificationId
+            return undefined;
+        }
+    }
+    async setMaxNotificationId(roomId: RoomId, newValue: string | undefined): Promise<void> {
+        await this.keyv.set(this.maxNotificationIdKey(roomId), newValue);
+    }
+
     async getAllSubscriptions(): Promise<Subscription[]> {
         return Promise.resolve(this.subscriptions);
     }
