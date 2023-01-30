@@ -4,16 +4,16 @@ import { Entity } from 'megalodon';
 
 const typeIcons = {'image': '🖼', 'video': '🎞️'};
 
-export function renderStatus(status: Entity.Status): string {
-    let title =
-        `<details>` +
-        `<summary><b>${status.account.display_name}` + (status.reblog ? ` ♻️ ${status.reblog.account.display_name}` : '') + `</b></summary>` +
-        `<blockquote>` +
-            `<p>id: <code>${status.id}</code><br>${status.uri.replace(/^https?:\/\//, '')}</p>` +
-            accountInfo(status.account) +
-            (status.reblog ? accountInfo(status.reblog.account) : '') +
-        `</blockquote>` +
-        `</details>`;
+export function renderStatus(status: Entity.Status, titleTemplate: string = '{}'): string {
+    let title = summary(
+        titleTemplate.replace(
+            '{}',
+            `<b>${status.account.display_name}` + (status.reblog ? ` ♻️ ${status.reblog.account.display_name}` : '') + `</b>`
+        ),
+        `<p>id: <code>${status.id}</code><br>${unlink(status.uri)}</p>` +
+        accountInfo(status.account) +
+        (status.reblog ? accountInfo(status.reblog.account) : '')
+    );
 
     let content = unlinkMentions(status.content);
 
@@ -45,9 +45,13 @@ export function unlinkMentions(content: string): string {
     return html.outerHTML;
 }
 
+function unlink(text: string): string {
+    return text.replace(/\bhttps?:\/\//g, '');
+}
+
 export function accountInfo(account: Entity.Account): string {
     const noteHtml = parse(account.note);
-    const noteText = noteHtml.structuredText.replace(/\bhttps?:\/\//g, '');
+    const noteText = unlink(noteHtml.structuredText);
 
     return `<p><b>${account.display_name}</b> (${account.acct}): ${noteText}</p>`;
 }
@@ -76,23 +80,26 @@ export function renderPoll(poll: Entity.Poll): string {
     ).join('');
 }
 
+function summary(title: string, content: string): string {
+    return `<details><summary>${title}</summary><blockquote>${content}</blockquote></details>`;
+}
+
 export function renderNotification(notification: Entity.Notification): string | undefined {
     if (notification.type == 'poll_expired' && notification.status) {
-        return '<p>🔔🗳️ Poll expired:</p>' +
-            renderStatus(notification.status);
+        return renderStatus(notification.status, '🔔🗳️ Poll by {} expired');
     } else if (notification.type == 'follow' && notification.account) {
-        return `<details>` +
-            `<summary>🔔🧑 <b>${notification.account.display_name}</b> follows you</summary>` +
-            `<blockquote>` +
-                accountInfo(notification.account) +
-            `</blockquote>` +
-            `</details>`;
+        return summary(
+            `🔔🧑 <b>${notification.account.display_name}</b> follows you`,
+            accountInfo(notification.account)
+        );
     } else if (notification.type == 'mention' && notification.account && notification.status) {
-        return `<p>🔔💬 <b>${notification.account.display_name}</b> mentioned you:</p>` +
-            renderStatus(notification.status);
+        return renderStatus(notification.status, '🔔💬 {} mentioned you');
     } else if (notification.type == 'favourite' && notification.account && notification.status) {
-        return `<p>🔔❤️ <b>${notification.account.display_name}</b> favourited your toot:</p>` +
-            renderStatus(notification.status);
+        return summary(
+            `🔔❤️ <b>${notification.account.display_name}</b> favourited your toot from ${notification.status.created_at}`,
+            `<p>${unlink(notification.status.uri)}</p>` +
+            (notification.status.plain_content || unlinkMentions(notification.status.content))
+        );
     } else {
         logger.debug(`Unknown notification type ${notification.type}`, notification);
         return undefined;
