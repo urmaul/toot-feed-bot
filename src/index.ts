@@ -126,14 +126,10 @@ async function run() {
 
 			const reloadStatuses = async () => {
 				const since_id = await store.getMaxStatusId(subscription.roomId);
-
-				const response = await subscriptionCient.getHomeTimeline({
-					limit: configs.app.statusLimit,
-					since_id,
-				})
+				const response = await subscriptionCient.getHomeTimeline({ since_id });
 
 				logger.debug(`${subscription.roomId.value}: Loaded ${response.data.length} statuses`);
-
+				
 				await handleStatuses(response.data);
 			};
 

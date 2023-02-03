@@ -10,8 +10,6 @@ export default () => {
             dataDir,
             // Number of seconds between refresh requests
             interval: env.get('APP_INTERVAL_SECONDS').default(5 * 60).asIntPositive(),
-            // Maximum number of statuses that can be requested from the source at once
-            statusLimit: env.get('APP_STATUS_LIMIT').asInt(),
         },
         store: {
             // Connection line for the Keyv store
