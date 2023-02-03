@@ -20,25 +20,27 @@ async function run() {
 		});
 	}
 
-	const store = new Store(configs.store, configSubscriptions);
+	const store = new Store(configs.store, configSubscriptions, configs.source);
+	const supportedSource = configs.source.ref;
 
 	// ----- Matrix bot
 
 	const matrix = await initMatrixBot(configs.matrix);
 
-	matrix.onCommand('reg', (url: string) => {
+	matrix.onCommand('reg', async (url: string) => {
 		try {
 			const urlObject = new URL(url);
-			if (urlObject.hostname === configs.source.ref.hostname) {
-				const source = initSourceClient(configs.source);
+			const sourceConfig = await store.getSource(urlObject.hostname);
+			if (sourceConfig) {
+				const source = initSourceClient(sourceConfig);
 				const pleromaClient = source.client as Pleroma
 				return pleromaClient.generateAuthUrl(
 					source.config.clientId,
 					source.config.clientSecret,
-					{scope: ['read']}
+					{ scope: ['read'] }
 				)
 			} else {
-				return Promise.resolve(`Currently only https://${configs.source.ref.hostname} is supported`);
+				return Promise.resolve(`Currently only https://${supportedSource.hostname} is supported`);
 			}
 		} catch (error) {
 			return Promise.resolve('Usage: <pre>!reg &lt;FediverseServerUrl&gt;</pre>');
@@ -46,7 +48,11 @@ async function run() {
 	});
 
 	matrix.onCommand('auth', async (code: string) => {
-		const source = initSourceClient(configs.source);
+		const sourceConfig = await store.getSource(supportedSource.hostname);
+		if (sourceConfig == undefined) {
+			return Promise.resolve('First start the authorization with <pre>!reg &lt;FediverseServerUrl&gt;</pre>');
+		}
+		const source = initSourceClient(sourceConfig);
 		try {
 			const accessToken = await source.client.fetchAccessToken(
 				source.config.clientId,
@@ -65,7 +71,7 @@ async function run() {
 
 		if (subscription) {
 			try {
-				const source = initSubscriptionClient(configs.source.ref, subscription.accessToken);
+				const source = initSubscriptionClient(supportedSource, subscription.accessToken);
 				const response = await source.getStatus(statusId)
 				logger.debug('Retrieved status', response.data)
 				await matrix.sendStatus(roomId, response.data);
@@ -93,7 +99,7 @@ async function run() {
 			}
 			logger.debug(`Starting subscription for ${subscription.roomId.value}`);
 
-			const subscriptionCient = initSubscriptionClient(configs.source.ref, subscription.accessToken);
+			const subscriptionCient = initSubscriptionClient(supportedSource, subscription.accessToken);
 
 
 			const handleStatuses = async (statuses: Entity.Status[]) => {
@@ -129,7 +135,7 @@ async function run() {
 				const response = await subscriptionCient.getHomeTimeline({ since_id });
 
 				logger.debug(`${subscription.roomId.value}: Loaded ${response.data.length} statuses`);
-				
+
 				await handleStatuses(response.data);
 			};
 
@@ -161,7 +167,7 @@ async function run() {
 				await handleNotifications(response.data);
 			};
 
-			const stream = initStreamingClient(configs.source.ref, subscription.accessToken);
+			const stream = initStreamingClient(supportedSource, subscription.accessToken);
 			ongoing.set(subscription.roomId, stream);
 
 			stream.on('connect', () => logger.debug(`Stream connected on ${subscription.roomId.value}`));

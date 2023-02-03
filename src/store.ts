@@ -3,6 +3,7 @@ import Keyv from 'keyv';
 import CryptoJS from 'crypto-js';
 import { RoomId } from './types';
 import { Subscription } from './subscription';
+import { SourceConfig } from './source';
 
 // Data store
 
@@ -18,8 +19,9 @@ export interface StoreConfig {
 export class Store {
     readonly keyv: Keyv;
     readonly subscriptions: Subscription[];
+    readonly source: SourceConfig;
 
-    constructor(config: StoreConfig, subscriptions: Subscription[]) {
+    constructor(config: StoreConfig, subscriptions: Subscription[], source: SourceConfig) {
         this.keyv = new Keyv(config.uri, {
             serialize: (data) => CryptoJS.AES.encrypt(JSON.stringify(data), config.secret).toString(),
             deserialize: (text) => JSON.parse(CryptoJS.AES.decrypt(text, config.secret).toString(CryptoJS.enc.Utf8))
@@ -27,6 +29,7 @@ export class Store {
         this.keyv.on('error', err => logger.error('Store Error', err));
 
         this.subscriptions = subscriptions;
+        this.source = source;
     }
 
     private maxStatusIdKey(roomId: RoomId): string {
@@ -68,5 +71,9 @@ export class Store {
     async getSubscription(roomId: RoomId): Promise<Subscription | undefined> {
         const subscription = this.subscriptions.find(s => s.roomId.value == roomId.value);
         return Promise.resolve(subscription);
+    }
+
+    async getSource(hostname: string): Promise<SourceConfig | undefined> {
+        return Promise.resolve(hostname == this.source.ref.hostname ? this.source : undefined);
     }
 }
