@@ -12,16 +12,18 @@ import { RoomId } from './types';
 const configs = loadConfigs();
 
 async function run() {
+	const supportedInstance = configs.fediverse.ref;
+
 	let configSubscriptions: Subscription[] = [];
 	if (configs.subscription.accessToken) {
 		configSubscriptions.push({
 			roomId: configs.subscription.roomId,
+			instanceRef: supportedInstance,
 			accessToken: configs.subscription.accessToken
 		});
 	}
 
 	const store = new Store(configs.store, configSubscriptions, configs.fediverse);
-	const supportedInstance = configs.fediverse.ref;
 
 	// ----- Matrix bot
 
@@ -71,7 +73,7 @@ async function run() {
 
 		if (subscription) {
 			try {
-				const fediverse = initSubscriptionClient(supportedInstance, subscription.accessToken);
+				const fediverse = initSubscriptionClient(subscription.instanceRef, subscription.accessToken);
 				const response = await fediverse.getStatus(statusId)
 				logger.debug('Retrieved status', response.data)
 				await matrix.sendStatus(roomId, response.data);
@@ -88,6 +90,8 @@ async function run() {
 		}
 	});
 
+	// ----- Subscriptions
+
 	let ongoing: Map<RoomId, WebSocketInterface> = new Map();
 
 	const reinit = async () => {
@@ -99,7 +103,7 @@ async function run() {
 			}
 			logger.debug(`Starting subscription for ${subscription.roomId.value}`);
 
-			const subscriptionCient = initSubscriptionClient(supportedInstance, subscription.accessToken);
+			const subscriptionCient = initSubscriptionClient(subscription.instanceRef, subscription.accessToken);
 
 
 			const handleStatuses = async (statuses: Entity.Status[]) => {
@@ -167,7 +171,7 @@ async function run() {
 				await handleNotifications(response.data);
 			};
 
-			const stream = initStreamingClient(supportedInstance, subscription.accessToken);
+			const stream = initStreamingClient(subscription.instanceRef, subscription.accessToken);
 			ongoing.set(subscription.roomId, stream);
 
 			stream.on('connect', () => logger.debug(`Stream connected on ${subscription.roomId.value}`));
