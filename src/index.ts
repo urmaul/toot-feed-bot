@@ -1,6 +1,6 @@
 'use strict';
 
-import { initSourceClient, initStreamingClient, initSubscriptionClient } from './source';
+import { initFediverseClient, initStreamingClient, initSubscriptionClient } from './fediverse';
 import { initMatrixBot } from './matrix';
 import { logger } from './logger';
 import { Subscription } from './subscription';
@@ -20,8 +20,8 @@ async function run() {
 		});
 	}
 
-	const store = new Store(configs.store, configSubscriptions, configs.source);
-	const supportedSource = configs.source.ref;
+	const store = new Store(configs.store, configSubscriptions, configs.fediverse);
+	const supportedInstance = configs.fediverse.ref;
 
 	// ----- Matrix bot
 
@@ -30,17 +30,17 @@ async function run() {
 	matrix.onCommand('reg', async (url: string) => {
 		try {
 			const urlObject = new URL(url);
-			const sourceConfig = await store.getSource(urlObject.hostname);
-			if (sourceConfig) {
-				const source = initSourceClient(sourceConfig);
-				const pleromaClient = source.client as Pleroma
+			const fediverseConfig = await store.getFediverseConfig(urlObject.hostname);
+			if (fediverseConfig) {
+				const fediverse = initFediverseClient(fediverseConfig);
+				const pleromaClient = fediverse.client as Pleroma
 				return pleromaClient.generateAuthUrl(
-					source.config.clientId,
-					source.config.clientSecret,
+					fediverse.config.clientId,
+					fediverse.config.clientSecret,
 					{ scope: ['read'] }
 				)
 			} else {
-				return Promise.resolve(`Currently only https://${supportedSource.hostname} is supported`);
+				return Promise.resolve(`Currently only https://${supportedInstance.hostname} is supported`);
 			}
 		} catch (error) {
 			return Promise.resolve('Usage: <pre>!reg &lt;FediverseServerUrl&gt;</pre>');
@@ -48,15 +48,15 @@ async function run() {
 	});
 
 	matrix.onCommand('auth', async (code: string) => {
-		const sourceConfig = await store.getSource(supportedSource.hostname);
-		if (sourceConfig == undefined) {
+		const fediverseConfig = await store.getFediverseConfig(supportedInstance.hostname);
+		if (fediverseConfig == undefined) {
 			return Promise.resolve('First start the authorization with <pre>!reg &lt;FediverseServerUrl&gt;</pre>');
 		}
-		const source = initSourceClient(sourceConfig);
+		const fediverse = initFediverseClient(fediverseConfig);
 		try {
-			const accessToken = await source.client.fetchAccessToken(
-				source.config.clientId,
-				source.config.clientSecret,
+			const accessToken = await fediverse.client.fetchAccessToken(
+				fediverse.config.clientId,
+				fediverse.config.clientSecret,
 				code
 			);
 			return JSON.stringify(accessToken);
@@ -71,8 +71,8 @@ async function run() {
 
 		if (subscription) {
 			try {
-				const source = initSubscriptionClient(supportedSource, subscription.accessToken);
-				const response = await source.getStatus(statusId)
+				const fediverse = initSubscriptionClient(supportedInstance, subscription.accessToken);
+				const response = await fediverse.getStatus(statusId)
 				logger.debug('Retrieved status', response.data)
 				await matrix.sendStatus(roomId, response.data);
 
@@ -99,7 +99,7 @@ async function run() {
 			}
 			logger.debug(`Starting subscription for ${subscription.roomId.value}`);
 
-			const subscriptionCient = initSubscriptionClient(supportedSource, subscription.accessToken);
+			const subscriptionCient = initSubscriptionClient(supportedInstance, subscription.accessToken);
 
 
 			const handleStatuses = async (statuses: Entity.Status[]) => {
@@ -167,7 +167,7 @@ async function run() {
 				await handleNotifications(response.data);
 			};
 
-			const stream = initStreamingClient(supportedSource, subscription.accessToken);
+			const stream = initStreamingClient(supportedInstance, subscription.accessToken);
 			ongoing.set(subscription.roomId, stream);
 
 			stream.on('connect', () => logger.debug(`Stream connected on ${subscription.roomId.value}`));

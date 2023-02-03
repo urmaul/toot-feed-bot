@@ -1,4 +1,4 @@
-export interface SourceRef {
+export interface InstanceRef {
     sns: 'pleroma';
     hostname: string;
 }

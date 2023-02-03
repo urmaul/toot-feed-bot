@@ -3,7 +3,7 @@ import Keyv from 'keyv';
 import CryptoJS from 'crypto-js';
 import { RoomId } from './types';
 import { Subscription } from './subscription';
-import { SourceConfig } from './source';
+import { FediverseConfig } from './fediverse';
 
 // Data store
 
@@ -19,9 +19,9 @@ export interface StoreConfig {
 export class Store {
     readonly keyv: Keyv;
     readonly subscriptions: Subscription[];
-    readonly source: SourceConfig;
+    readonly fediverse: FediverseConfig;
 
-    constructor(config: StoreConfig, subscriptions: Subscription[], source: SourceConfig) {
+    constructor(config: StoreConfig, subscriptions: Subscription[], fediverse: FediverseConfig) {
         this.keyv = new Keyv(config.uri, {
             serialize: (data) => CryptoJS.AES.encrypt(JSON.stringify(data), config.secret).toString(),
             deserialize: (text) => JSON.parse(CryptoJS.AES.decrypt(text, config.secret).toString(CryptoJS.enc.Utf8))
@@ -29,7 +29,7 @@ export class Store {
         this.keyv.on('error', err => logger.error('Store Error', err));
 
         this.subscriptions = subscriptions;
-        this.source = source;
+        this.fediverse = fediverse;
     }
 
     private maxStatusIdKey(roomId: RoomId): string {
@@ -73,7 +73,7 @@ export class Store {
         return Promise.resolve(subscription);
     }
 
-    async getSource(hostname: string): Promise<SourceConfig | undefined> {
-        return Promise.resolve(hostname == this.source.ref.hostname ? this.source : undefined);
+    async getFediverseConfig(hostname: string): Promise<FediverseConfig | undefined> {
+        return Promise.resolve(hostname == this.fediverse.ref.hostname ? this.fediverse : undefined);
     }
 }
