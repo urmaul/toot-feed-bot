@@ -26,6 +26,8 @@ async function run() {
 		});
 	}
 
+	let ongoing: Map<string, WebSocketInterface> = new Map();
+
 	// ----- Matrix bot
 
 	const matrix = await initMatrixBot(configs.matrix);
@@ -91,9 +93,21 @@ async function run() {
 		}
 	});
 
-	// ----- Subscriptions
+	matrix.onCommand('stop', async (_: string, roomId: RoomId) => {
+		await store.deleteSubscription(roomId);
+		logger.info('Deleted subscripion');
 
-	let ongoing: Map<string, WebSocketInterface> = new Map();
+		let ongoingStream = ongoing.get(roomId.value);
+		if (ongoingStream) {
+			ongoingStream.stop();
+			ongoingStream.removeAllListeners();
+			ongoing.delete(roomId.value);
+		}
+
+		return 'Subscripton stopped. All data deleted.';
+	});
+
+	// ----- Subscriptions
 
 	const reinit = async () => {
 		const subscriptions = await store.getAllSubscriptions();

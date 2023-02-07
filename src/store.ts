@@ -89,6 +89,12 @@ export class Store {
         }
     }
 
+    async deleteSubscription(roomId: RoomId): Promise<void> {
+        await this.subscriptions.delete(this.hash(roomId));
+        await this.keyv.delete(this.maxStatusIdKey(roomId));
+        await this.keyv.delete(this.maxNotificationIdKey(roomId));
+    }
+
     async getFediverseConfig(hostname: string): Promise<FediverseConfig | undefined> {
         return Promise.resolve(hostname == this.fediverse.ref.hostname ? this.fediverse : undefined);
     }
