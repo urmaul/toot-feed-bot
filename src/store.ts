@@ -22,7 +22,7 @@ export class Store {
     readonly subscriptions: Keyv;
     readonly fediverse: FediverseConfig;
 
-    constructor(config: StoreConfig, subscriptions: Subscription[], fediverse: FediverseConfig) {
+    constructor(config: StoreConfig, fediverse: FediverseConfig) {
         const serialize = (data) => CryptoJS.AES.encrypt(JSON.stringify(data), config.secret).toString();
         const deserialize = (text) => JSON.parse(CryptoJS.AES.decrypt(text, config.secret).toString(CryptoJS.enc.Utf8));
         const store = new KeyvSqlite({ uri: config.uri });

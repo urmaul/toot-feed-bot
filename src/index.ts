@@ -13,10 +13,8 @@ const configs = loadConfigs();
 
 async function run() {
 	const supportedInstance = configs.fediverse.ref;
-
-	let configSubscriptions: Subscription[] = [];
-
-	const store = new Store(configs.store, configSubscriptions, configs.fediverse);
+	const store = new Store(configs.store, configs.fediverse);
+	let ongoing: Map<string, WebSocketInterface> = new Map();
 
 	if (configs.subscription.accessToken) {
 		store.addSubscription({
@@ -25,8 +23,6 @@ async function run() {
 			accessToken: configs.subscription.accessToken
 		});
 	}
-
-	let ongoing: Map<string, WebSocketInterface> = new Map();
 
 	// ----- Matrix bot
 
