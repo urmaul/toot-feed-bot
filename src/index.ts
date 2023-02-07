@@ -15,15 +15,16 @@ async function run() {
 	const supportedInstance = configs.fediverse.ref;
 
 	let configSubscriptions: Subscription[] = [];
+
+	const store = new Store(configs.store, configSubscriptions, configs.fediverse);
+
 	if (configs.subscription.accessToken) {
-		configSubscriptions.push({
+		store.addSubscription({
 			roomId: configs.subscription.roomId,
 			instanceRef: supportedInstance,
 			accessToken: configs.subscription.accessToken
 		});
 	}
-
-	const store = new Store(configs.store, configSubscriptions, configs.fediverse);
 
 	// ----- Matrix bot
 

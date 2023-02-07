@@ -4,6 +4,7 @@ import CryptoJS from 'crypto-js';
 import { RoomId } from './types';
 import { Subscription } from './subscription';
 import { FediverseConfig } from './fediverse';
+import KeyvSqlite from '@keyv/sqlite';
 
 // Data store
 
@@ -18,17 +19,19 @@ export interface StoreConfig {
 
 export class Store {
     readonly keyv: Keyv;
-    readonly subscriptions: Subscription[];
+    readonly subscriptions: Keyv;
     readonly fediverse: FediverseConfig;
 
     constructor(config: StoreConfig, subscriptions: Subscription[], fediverse: FediverseConfig) {
-        this.keyv = new Keyv(config.uri, {
-            serialize: (data) => CryptoJS.AES.encrypt(JSON.stringify(data), config.secret).toString(),
-            deserialize: (text) => JSON.parse(CryptoJS.AES.decrypt(text, config.secret).toString(CryptoJS.enc.Utf8))
-        });
-        this.keyv.on('error', err => logger.error('Store Error', err));
+        const serialize = (data) => CryptoJS.AES.encrypt(JSON.stringify(data), config.secret).toString();
+        const deserialize = (text) => JSON.parse(CryptoJS.AES.decrypt(text, config.secret).toString(CryptoJS.enc.Utf8));
+        const store = new KeyvSqlite({ uri: config.uri });
 
-        this.subscriptions = subscriptions;
+        this.keyv = new Keyv({ store, serialize, deserialize, namespace: 'bot' });
+        this.keyv.on('error', err => logger.error('Store Error', err));
+        this.subscriptions = new Keyv({ store, serialize, deserialize, namespace: 'subscriptions' });
+        this.subscriptions.on('error', err => logger.error('Subscriptions store Error', err));
+
         this.fediverse = fediverse;
     }
 
@@ -64,13 +67,25 @@ export class Store {
         await this.keyv.set(this.maxNotificationIdKey(roomId), newValue);
     }
 
+    async addSubscription(subscription: Subscription): Promise<void> {
+        await this.subscriptions.set(subscription.roomId.value, subscription);
+    }
+
     async getAllSubscriptions(): Promise<Subscription[]> {
-        return Promise.resolve(this.subscriptions);
+        let subscriptions: Subscription[] = [];
+        for await (const [k, subscription] of this.subscriptions.iterator()) {
+            subscriptions.push(subscription);
+        }
+        return subscriptions;
     }
 
     async getSubscription(roomId: RoomId): Promise<Subscription | undefined> {
-        const subscription = this.subscriptions.find(s => s.roomId.value == roomId.value);
-        return Promise.resolve(subscription);
+        try {
+            return await this.subscriptions.get(roomId.value);
+        } catch (error) {
+            logger.error(`Error while getting subscription for ${roomId.value}`, error);
+            return undefined;
+        }
     }
 
     async getFediverseConfig(hostname: string): Promise<FediverseConfig | undefined> {
