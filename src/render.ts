@@ -51,9 +51,10 @@ function unlink(text: string): string {
 
 export function accountInfo(account: Entity.Account): string {
     const noteHtml = parse(account.note);
+    const link = unlink(account.url);
     const noteText = unlink(noteHtml.structuredText);
 
-    return `<p><b>${account.display_name}</b> (${account.acct}): ${noteText}</p>`;
+    return `<p><b>${account.display_name}</b> ${link}<br>${noteText}</p>`;
 }
 
 function renderMediaAttachment(media: Entity.Attachment): string {
