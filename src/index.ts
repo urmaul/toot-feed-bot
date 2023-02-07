@@ -93,13 +93,13 @@ async function run() {
 
 	// ----- Subscriptions
 
-	let ongoing: Map<RoomId, WebSocketInterface> = new Map();
+	let ongoing: Map<string, WebSocketInterface> = new Map();
 
 	const reinit = async () => {
 		const subscriptions = await store.getAllSubscriptions();
 
 		for (const subscription of subscriptions) {
-			if (ongoing.has(subscription.roomId)) {
+			if (ongoing.has(subscription.roomId.value)) {
 				break;
 			}
 			logger.debug(`Starting subscription for ${subscription.roomId.value}`);
@@ -173,7 +173,7 @@ async function run() {
 			};
 
 			const stream = initStreamingClient(subscription.instanceRef, subscription.accessToken);
-			ongoing.set(subscription.roomId, stream);
+			ongoing.set(subscription.roomId.value, stream);
 
 			stream.on('connect', () => logger.debug(`Stream connected on ${subscription.roomId.value}`));
 			stream.on('update', (status: Entity.Status) => handleStatuses([status]));
@@ -182,7 +182,7 @@ async function run() {
 			stream.on('heartbeat', () => logger.debug(`Heartbeat on ${subscription.roomId.value}`));
 			stream.on('close', () => {
 				logger.info(`Stream closed on ${subscription.roomId.value}`)
-				ongoing.delete(subscription.roomId);
+				ongoing.delete(subscription.roomId.value);
 			});
 			stream.on('parser-error', (err: Error) => logger.warn(`Stream parser error on ${subscription.roomId.value}`, err));
 

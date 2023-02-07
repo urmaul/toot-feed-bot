@@ -36,14 +36,14 @@ export class Store {
     }
 
     private maxStatusIdKey(roomId: RoomId): string {
-        return `maxStatusId:${roomId.value}`;
+        return `maxStatusId:${this.hash(roomId)}`;
     }
     async getMaxStatusId(roomId: RoomId): Promise<string | undefined> {
         try {
             return await this.keyv.get(this.maxStatusIdKey(roomId));
         } catch (error) {
-            logger.error(`Error while getting maxStatusId for ${roomId.value}`, error);
-            // Fallback to no maxStatusId
+            logger.error(`Error while getting maxStatusId for ${this.hash(roomId)}`, error);
+            // Fallback to undefined
             return undefined;
         }
     }
@@ -52,14 +52,14 @@ export class Store {
     }
 
     private maxNotificationIdKey(roomId: RoomId): string {
-        return `maxNotificationId:${roomId.value}`;
+        return `maxNotificationId:${this.hash(roomId)}`;
     }
     async getMaxNotificationId(roomId: RoomId): Promise<string | undefined> {
         try {
             return await this.keyv.get(this.maxNotificationIdKey(roomId));
         } catch (error) {
-            logger.error(`Error while getting maxNotificationId for ${roomId.value}`, error);
-            // Fallback to no maxNotificationId
+            logger.error(`Error while getting maxNotificationId for ${this.hash(roomId)}`, error);
+            // Fallback to undefined
             return undefined;
         }
     }
@@ -68,12 +68,12 @@ export class Store {
     }
 
     async addSubscription(subscription: Subscription): Promise<void> {
-        await this.subscriptions.set(subscription.roomId.value, subscription);
+        await this.subscriptions.set(this.hash(subscription.roomId), subscription);
     }
 
     async getAllSubscriptions(): Promise<Subscription[]> {
         let subscriptions: Subscription[] = [];
-        for await (const [k, subscription] of this.subscriptions.iterator()) {
+        for await (const [_, subscription] of this.subscriptions.iterator()) {
             subscriptions.push(subscription);
         }
         return subscriptions;
@@ -81,14 +81,19 @@ export class Store {
 
     async getSubscription(roomId: RoomId): Promise<Subscription | undefined> {
         try {
-            return await this.subscriptions.get(roomId.value);
+            return await this.subscriptions.get(this.hash(roomId));
         } catch (error) {
-            logger.error(`Error while getting subscription for ${roomId.value}`, error);
+            logger.error(`Error while getting subscription for ${this.hash(roomId)}`, error);
+            // Fallback to undefined
             return undefined;
         }
     }
 
     async getFediverseConfig(hostname: string): Promise<FediverseConfig | undefined> {
         return Promise.resolve(hostname == this.fediverse.ref.hostname ? this.fediverse : undefined);
+    }
+
+    private hash(roomId: RoomId): string {
+        return CryptoJS.SHA256(roomId.value).toString(CryptoJS.enc.Base64);
     }
 }
