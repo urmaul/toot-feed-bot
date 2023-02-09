@@ -7,12 +7,12 @@ import { Subscription } from './subscription';
 import loadConfigs from './config';
 import { Pleroma, WebSocketInterface } from 'megalodon';
 import { Store } from './store';
-import { RoomId } from './types';
+import { InstanceRef, RoomId } from './types';
 
 const configs = loadConfigs();
 
 async function run() {
-	const supportedInstance = configs.fediverse.ref;
+	const supportedInstance: InstanceRef = configs.fediverse.ref;
 	const store = new Store(configs.store, configs.fediverse);
 	let ongoing: Map<string, WebSocketInterface> = new Map();
 
@@ -48,19 +48,26 @@ async function run() {
 		}
 	});
 
-	matrix.onCommand('auth', async (code: string) => {
-		const fediverseConfig = await store.getFediverseConfig(supportedInstance.hostname);
+	matrix.onCommand('auth', async (code: string, roomId: RoomId) => {
+		const instanceRef = supportedInstance;
+		const fediverseConfig = await store.getFediverseConfig(instanceRef.hostname);
 		if (fediverseConfig == undefined) {
 			return Promise.resolve('First start the authorization with <pre>!reg &lt;FediverseServerUrl&gt;</pre>');
 		}
 		const fediverse = initFediverseClient(fediverseConfig);
 		try {
-			const accessToken = await fediverse.client.fetchAccessToken(
+			const tokenData = await fediverse.client.fetchAccessToken(
 				fediverse.config.clientId,
 				fediverse.config.clientSecret,
 				code
 			);
-			return JSON.stringify(accessToken);
+			await store.addSubscription({
+				roomId,
+				instanceRef,
+				accessToken: tokenData.access_token
+			});
+			return "Subscription created succesfully. Now you can delete your `!auth` message.";
+
 		} catch (error) {
 			const responseError = (error as any).response.data.error;
 			return responseError ? `${responseError}` : `${error}`;
