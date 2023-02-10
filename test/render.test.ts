@@ -65,7 +65,7 @@ describe('render', () => {
             fields: [],
             bot: false,
         };
-        const expected = '<p><b>John Mastodon</b> (john@mastodon.test): John Mastodon, a mammal\nmastodon.test/@john\njohnmastodon.test/</p>';
+        const expected = '<p><b>John Mastodon</b> mastodon.test/@john<br>John Mastodon, a mammal\nmastodon.test/@john\njohnmastodon.test/</p>';
         const actual = accountInfo(account);
         expect(actual).to.equal(expected);
     });
