@@ -35,11 +35,14 @@ async function run() {
 			if (fediverseConfig) {
 				const fediverse = initFediverseClient(fediverseConfig);
 				const pleromaClient = fediverse.client as Pleroma
-				return pleromaClient.generateAuthUrl(
+				const authUrl = await pleromaClient.generateAuthUrl(
 					fediverse.config.clientId,
 					fediverse.config.clientSecret,
 					{ scope: ['read'] }
-				)
+				);
+				return `Login url: ${authUrl}<br>` +
+					'Please copy the authorization token you get after logging in ' +
+					'and run command: <pre>!auth &lt;token&gt;</pre>';
 			} else {
 				return Promise.resolve(`Currently only https://${supportedInstance.hostname} is supported`);
 			}
@@ -66,7 +69,7 @@ async function run() {
 				instanceRef,
 				accessToken: tokenData.access_token
 			});
-			return "Subscription created succesfully. Now you can delete your `!auth` message.";
+			return "Subscription created succesfully";
 
 		} catch (error) {
 			const responseError = (error as any).response.data.error;
@@ -117,7 +120,7 @@ async function run() {
 
 		for (const subscription of subscriptions) {
 			if (ongoing.has(subscription.roomId.value)) {
-				break;
+				continue;
 			}
 			logger.debug(`Starting subscription for ${subscription.roomId.value}`);
 
