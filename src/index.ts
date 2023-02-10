@@ -3,7 +3,6 @@
 import { initFediverseClient, initStreamingClient, initSubscriptionClient } from './fediverse';
 import { initMatrixBot } from './matrix';
 import { logger } from './logger';
-import { Subscription } from './subscription';
 import loadConfigs from './config';
 import { Pleroma, WebSocketInterface } from 'megalodon';
 import { Store } from './store';
@@ -15,14 +14,6 @@ async function run() {
 	const supportedInstance: InstanceRef = configs.fediverse.ref;
 	const store = new Store(configs.store, configs.fediverse);
 	let ongoing: Map<string, WebSocketInterface> = new Map();
-
-	if (configs.subscription.accessToken) {
-		store.addSubscription({
-			roomId: configs.subscription.roomId,
-			instanceRef: supportedInstance,
-			accessToken: configs.subscription.accessToken
-		});
-	}
 
 	// ----- Matrix bot
 

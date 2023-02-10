@@ -29,10 +29,6 @@ export default () => {
             clientId: env.get('FEDIVERSE_CLIENT_ID').required().asString(),
             clientSecret: env.get('FEDIVERSE_CLIENT_SECRET').required().asString(),
         },
-        subscription: {
-            roomId: newRoomId(env.get('SUBSCRIPTION_ROOM_ID').required().asString()),
-            accessToken: env.get('SUBSCRIPTION_ACCESS_TOKEN').asString(),
-        },
         matrix: {
             serverUrl: env.get('MATRIX_SERVER_URL').required().asUrlObject().origin,
             accessToken: env.get('MATRIX_ACCESS_TOKEN').required().asString(),
