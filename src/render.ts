@@ -99,6 +99,7 @@ export function renderNotification(notification: Entity.Notification): string | 
         return summary(
             `🔔❤️ <b>${notification.account.display_name}</b> favourited your toot from ${notification.status.created_at}`,
             `<p>${unlink(notification.status.uri)}</p>` +
+            accountInfo(notification.account) +
             (notification.status.plain_content || unlinkMentions(notification.status.content))
         );
     } else {
