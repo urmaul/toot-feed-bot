@@ -19,31 +19,41 @@ async function run() {
 
 	const matrix = await initMatrixBot(configs.matrix);
 
-	matrix.onCommand('reg', async (url: string) => {
+	matrix.onCommand('reg', async (url: string, roomId: RoomId) => {
 		try {
 			const urlObject = new URL(url);
 			const fediverseConfig = await store.getFediverseConfig(urlObject.hostname);
-			if (fediverseConfig) {
-				const fediverse = initFediverseClient(fediverseConfig);
-				const pleromaClient = fediverse.client as Pleroma
-				const authUrl = await pleromaClient.generateAuthUrl(
-					fediverse.config.clientId,
-					fediverse.config.clientSecret,
-					{ scope: ['read'] }
-				);
-				return `Login url: ${authUrl}<br>` +
-					'Please copy the authorization token you get after logging in ' +
-					'and run command: <pre>!auth &lt;token&gt;</pre>';
-			} else {
+			if (fediverseConfig == undefined) {
 				return Promise.resolve(`Currently only https://${supportedInstance.hostname} is supported`);
 			}
+
+			const fediverse = initFediverseClient(fediverseConfig);
+			const pleromaClient = fediverse.client as Pleroma
+			const authUrl = await pleromaClient.generateAuthUrl(
+				fediverse.config.clientId,
+				fediverse.config.clientSecret,
+				{ scope: ['read'] }
+			);
+
+			store.addOngoingRegistration({
+				roomId,
+				instanceRef: fediverseConfig.ref,
+			});
+
+			return `Login url: ${authUrl}<br>` +
+				'Please copy the authorization token you get after logging in ' +
+				'and run command: <pre>!auth &lt;token&gt;</pre>';
 		} catch (error) {
 			return Promise.resolve('Usage: <pre>!reg &lt;FediverseServerUrl&gt;</pre>');
 		}
 	});
 
 	matrix.onCommand('auth', async (code: string, roomId: RoomId) => {
-		const instanceRef = supportedInstance;
+		const ongoingRegistration = await store.getOngoingRegistration(roomId);
+		if (ongoingRegistration == undefined) {
+			return Promise.resolve('First start the authorization with <pre>!reg &lt;FediverseServerUrl&gt;</pre>');
+		}
+		const instanceRef = ongoingRegistration.instanceRef;
 		const fediverseConfig = await store.getFediverseConfig(instanceRef.hostname);
 		if (fediverseConfig == undefined) {
 			return Promise.resolve('First start the authorization with <pre>!reg &lt;FediverseServerUrl&gt;</pre>');
@@ -55,11 +65,14 @@ async function run() {
 				fediverse.config.clientSecret,
 				code
 			);
+
 			await store.addSubscription({
 				roomId,
 				instanceRef,
 				accessToken: tokenData.access_token
 			});
+			await store.deleteOngoingRegistration(roomId);
+
 			return "Subscription created succesfully";
 
 		} catch (error) {

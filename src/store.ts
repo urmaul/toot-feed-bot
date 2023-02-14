@@ -5,6 +5,7 @@ import { RoomId } from './types';
 import { Subscription } from './subscription';
 import { FediverseConfig } from './fediverse';
 import KeyvSqlite from '@keyv/sqlite';
+import { OngoingRegistration } from './registration';
 
 // Data store
 
@@ -18,9 +19,9 @@ export interface StoreConfig {
 }
 
 export class Store {
-    readonly keyv: Keyv;
-    readonly subscriptions: Keyv;
-    readonly fediverse: FediverseConfig;
+    private keyv: Keyv;
+    private subscriptions: Keyv;
+    private fediverse: FediverseConfig;
 
     constructor(config: StoreConfig, fediverse: FediverseConfig) {
         const serialize = (data) => CryptoJS.AES.encrypt(JSON.stringify(data), config.secret).toString();
@@ -34,6 +35,12 @@ export class Store {
 
         this.fediverse = fediverse;
     }
+
+    private hash(roomId: RoomId): string {
+        return CryptoJS.SHA256(roomId.value).toString(CryptoJS.enc.Base64);
+    }
+
+    // -- Max status ids --
 
     private maxStatusIdKey(roomId: RoomId): string {
         return `maxStatusId:${this.hash(roomId)}`;
@@ -51,6 +58,8 @@ export class Store {
         await this.keyv.set(this.maxStatusIdKey(roomId), newValue);
     }
 
+    // -- Max notification ids --
+
     private maxNotificationIdKey(roomId: RoomId): string {
         return `maxNotificationId:${this.hash(roomId)}`;
     }
@@ -67,13 +76,15 @@ export class Store {
         await this.keyv.set(this.maxNotificationIdKey(roomId), newValue);
     }
 
+    // -- Subscriptions --
+
     async addSubscription(subscription: Subscription): Promise<void> {
         await this.subscriptions.set(this.hash(subscription.roomId), subscription);
     }
 
     async getAllSubscriptions(): Promise<Subscription[]> {
         let subscriptions: Subscription[] = [];
-        for await (const [_, subscription] of this.subscriptions.iterator()) {
+        for await (const [_, subscription] of this.subscriptions.iterator("subscriptions")) {
             subscriptions.push(subscription);
         }
         return subscriptions;
@@ -93,13 +104,36 @@ export class Store {
         await this.subscriptions.delete(this.hash(roomId));
         await this.keyv.delete(this.maxStatusIdKey(roomId));
         await this.keyv.delete(this.maxNotificationIdKey(roomId));
+        await this.keyv.delete(this.ongoingRegistrationKey(roomId));
     }
+
+    // -- Fediverse configs --
 
     async getFediverseConfig(hostname: string): Promise<FediverseConfig | undefined> {
         return Promise.resolve(hostname == this.fediverse.ref.hostname ? this.fediverse : undefined);
     }
 
-    private hash(roomId: RoomId): string {
-        return CryptoJS.SHA256(roomId.value).toString(CryptoJS.enc.Base64);
+    // -- Ongoing registrations --
+
+    private ongoingRegistrationKey(roomId: RoomId): string {
+        return `ongoingRegistration:${this.hash(roomId)}`;
+    }
+
+    async addOngoingRegistration(registration: OngoingRegistration): Promise<void> {
+        await this.keyv.set(this.ongoingRegistrationKey(registration.roomId), registration);
+    }
+
+    async getOngoingRegistration(roomId: RoomId): Promise<OngoingRegistration | undefined> {
+        try {
+            return await this.keyv.get(this.ongoingRegistrationKey(roomId));
+        } catch (error) {
+            logger.error(`Error while getting OngoingRegistration for ${this.hash(roomId)}`, error);
+            // Fallback to undefined
+            return undefined;
+        }
+    }
+
+    async deleteOngoingRegistration(roomId: RoomId): Promise<void> {
+        await this.keyv.delete(this.ongoingRegistrationKey(roomId));
     }
 }
