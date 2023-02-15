@@ -84,7 +84,7 @@ export class Store {
 
     async getAllSubscriptions(): Promise<Subscription[]> {
         let subscriptions: Subscription[] = [];
-        for await (const [_, subscription] of this.subscriptions.iterator("subscriptions")) {
+        for await (const [_, subscription] of this.subscriptions.iterator()) {
             subscriptions.push(subscription);
         }
         return subscriptions;
