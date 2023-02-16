@@ -173,12 +173,12 @@ async function run() {
 				}
 
 				if (newMaxStatusId !== undefined) {
-					await store.setMaxStatusId(subscription.roomId, newMaxStatusId);
+					await store.maxStatusIds.set(subscription.roomId, newMaxStatusId);
 				}
 			}
 
 			const reloadStatuses = async () => {
-				const since_id = await store.getMaxStatusId(subscription.roomId);
+				const since_id = await store.maxStatusIds.get(subscription.roomId);
 				const response = await subscriptionCient.getHomeTimeline({ since_id });
 
 				logger.debug(`${subscription.roomId.value}: Loaded ${response.data.length} statuses`);
@@ -201,12 +201,12 @@ async function run() {
 				}
 
 				if (newMaxNotificationId !== undefined) {
-					await store.setMaxNotificationId(subscription.roomId, newMaxNotificationId);
+					await store.maxNotificationIds.set(subscription.roomId, newMaxNotificationId);
 				}
 			}
 
 			const reloadNotifications = async () => {
-				const since_id = await store.getMaxNotificationId(subscription.roomId);
+				const since_id = await store.maxNotificationIds.get(subscription.roomId);
 				const response = await subscriptionCient.getNotifications({ since_id });
 
 				logger.debug(`${subscription.roomId.value}: Loaded ${response.data.length} notifications`);

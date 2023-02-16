@@ -23,6 +23,8 @@ export class Store {
     private subscriptions: Keyv;
 
     fediverseConfigs: FediverseConfigRepository;
+    maxStatusIds: MaxIdRepository;
+    maxNotificationIds: MaxIdRepository;
 
     constructor(config: StoreConfig) {
         const serialize = (data) => CryptoJS.AES.encrypt(JSON.stringify(data), config.secret).toString();
@@ -35,11 +37,32 @@ export class Store {
         this.subscriptions.on('error', err => logger.error('Subscriptions store Error', err));
 
         const fediverseConfigKey = (hostname: string) => `fediverseConfig:${hostname}`;
+        const maxStatusIdKey = (roomId: RoomId) => `maxStatusId:${this.hash(roomId)}`;
+        const maxNotificationIdKey = (roomId: RoomId) => `maxNotificationId:${this.hash(roomId)}`;
+
         this.fediverseConfigs = {
             get: (hostname: string): Promise<FediverseConfig | undefined> =>
                 this.tryGet(fediverseConfigKey(hostname)),
             add: (fediverseConfig: FediverseConfig): Promise<void> => 
                 this.trySet(fediverseConfigKey(fediverseConfig.ref.hostname), fediverseConfig),
+        };
+
+        this.maxStatusIds = {
+            get: (roomId: RoomId): Promise<string | undefined> =>
+                this.tryGet(maxStatusIdKey(roomId)),
+            set: (roomId: RoomId, newValue: string): Promise<void> =>
+                this.trySet(maxStatusIdKey(roomId), newValue),
+            delete: (roomId: RoomId): Promise<void> =>
+                this.tryDelete(maxStatusIdKey(roomId)),
+        };
+
+        this.maxNotificationIds = {
+            get: (roomId: RoomId): Promise<string | undefined> =>
+                this.tryGet(maxNotificationIdKey(roomId)),
+            set: (roomId: RoomId, newValue: string): Promise<void> =>
+                this.trySet(maxNotificationIdKey(roomId), newValue),
+            delete: (roomId: RoomId): Promise<void> =>
+                this.tryDelete(maxNotificationIdKey(roomId)),
         };
     }
 
@@ -65,28 +88,12 @@ export class Store {
         }
     }
 
-    // -- Max status ids --
-
-    private maxStatusIdKey(roomId: RoomId): string {
-        return `maxStatusId:${this.hash(roomId)}`;
-    }
-    getMaxStatusId(roomId: RoomId): Promise<string | undefined> {
-        return this.tryGet(this.maxStatusIdKey(roomId));
-    }
-    setMaxStatusId(roomId: RoomId, newValue: string | undefined): Promise<void> {
-        return this.trySet(this.maxStatusIdKey(roomId), newValue);
-    }
-
-    // -- Max notification ids --
-
-    private maxNotificationIdKey(roomId: RoomId): string {
-        return `maxNotificationId:${this.hash(roomId)}`;
-    }
-    async getMaxNotificationId(roomId: RoomId): Promise<string | undefined> {
-        return this.tryGet(this.maxNotificationIdKey(roomId));
-    }
-    async setMaxNotificationId(roomId: RoomId, newValue: string | undefined): Promise<void> {
-        return this.trySet(this.maxNotificationIdKey(roomId), newValue);
+    private async tryDelete(key: string): Promise<void> {
+        try {
+            await this.keyv.delete(key);
+        } catch (error) {
+            logger.error(`Error while deleting ${key}`, error);
+        }
     }
 
     // -- Subscriptions --
@@ -115,8 +122,8 @@ export class Store {
 
     async deleteSubscription(roomId: RoomId): Promise<void> {
         await this.subscriptions.delete(this.hash(roomId));
-        await this.keyv.delete(this.maxStatusIdKey(roomId));
-        await this.keyv.delete(this.maxNotificationIdKey(roomId));
+        await this.maxStatusIds.delete(roomId);
+        await this.maxNotificationIds.delete(roomId);
         await this.keyv.delete(this.ongoingRegistrationKey(roomId));
     }
 
@@ -142,4 +149,10 @@ export class Store {
 export interface FediverseConfigRepository {
     get(hostname: string): Promise<FediverseConfig | undefined>;
     add(fediverseConfig: FediverseConfig): Promise<void>;
+}
+
+export interface MaxIdRepository {
+    get(roomId: RoomId): Promise<string | undefined>;
+    set(roomId: RoomId, newValue: string): Promise<void>;
+    delete(roomId: RoomId): Promise<void>;
 }
