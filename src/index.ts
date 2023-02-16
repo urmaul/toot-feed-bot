@@ -12,8 +12,11 @@ const configs = loadConfigs();
 
 async function run() {
 	const supportedInstance: InstanceRef = configs.fediverse.ref;
-	const store = new Store(configs.store, configs.fediverse);
+	const store = new Store(configs.store);
 	let ongoing: Map<string, WebSocketInterface> = new Map();
+
+	// Save FediverseConfig from configuration
+	store.fediverseConfigs.add(configs.fediverse);
 
 	// ----- Matrix bot
 
@@ -22,7 +25,7 @@ async function run() {
 	matrix.onCommand('reg', async (url: string, roomId: RoomId) => {
 		try {
 			const urlObject = new URL(url);
-			const fediverseConfig = await store.getFediverseConfig(urlObject.hostname);
+			const fediverseConfig = await store.fediverseConfigs.get(urlObject.hostname);
 			if (fediverseConfig == undefined) {
 				return Promise.resolve(`Currently only https://${supportedInstance.hostname} is supported`);
 			}
@@ -54,7 +57,7 @@ async function run() {
 			return Promise.resolve('First start the authorization with <pre>!reg &lt;FediverseServerUrl&gt;</pre>');
 		}
 		const instanceRef = ongoingRegistration.instanceRef;
-		const fediverseConfig = await store.getFediverseConfig(instanceRef.hostname);
+		const fediverseConfig = await store.fediverseConfigs.get(instanceRef.hostname);
 		if (fediverseConfig == undefined) {
 			return Promise.resolve('First start the authorization with <pre>!reg &lt;FediverseServerUrl&gt;</pre>');
 		}

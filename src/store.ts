@@ -21,9 +21,10 @@ export interface StoreConfig {
 export class Store {
     private keyv: Keyv;
     private subscriptions: Keyv;
-    private fediverse: FediverseConfig;
 
-    constructor(config: StoreConfig, fediverse: FediverseConfig) {
+    fediverseConfigs: FediverseConfigRepository;
+
+    constructor(config: StoreConfig) {
         const serialize = (data) => CryptoJS.AES.encrypt(JSON.stringify(data), config.secret).toString();
         const deserialize = (text) => JSON.parse(CryptoJS.AES.decrypt(text, config.secret).toString(CryptoJS.enc.Utf8));
         const store = new KeyvSqlite({ uri: config.uri });
@@ -33,7 +34,21 @@ export class Store {
         this.subscriptions = new Keyv({ store, serialize, deserialize, namespace: 'subscriptions' });
         this.subscriptions.on('error', err => logger.error('Subscriptions store Error', err));
 
-        this.fediverse = fediverse;
+        const fediverseConfigKey = (hostname: string) => `fediverseConfig:${hostname}`;
+        this.fediverseConfigs = {
+            get: async (hostname: string): Promise<FediverseConfig | undefined> => {
+                try {
+                    return await this.keyv.get(fediverseConfigKey(hostname));
+                } catch (error) {
+                    logger.error(`Error while getting FediverseConfig for ${hostname}`, error);
+                    // Fallback to undefined
+                    return undefined;
+                }
+            },
+            add: async (fediverseConfig: FediverseConfig): Promise<void> => {
+                await this.keyv.set(fediverseConfigKey(fediverseConfig.ref.hostname), fediverseConfig);
+            }
+        };
     }
 
     private hash(roomId: RoomId): string {
@@ -107,12 +122,6 @@ export class Store {
         await this.keyv.delete(this.ongoingRegistrationKey(roomId));
     }
 
-    // -- Fediverse configs --
-
-    async getFediverseConfig(hostname: string): Promise<FediverseConfig | undefined> {
-        return Promise.resolve(hostname == this.fediverse.ref.hostname ? this.fediverse : undefined);
-    }
-
     // -- Ongoing registrations --
 
     private ongoingRegistrationKey(roomId: RoomId): string {
@@ -136,4 +145,9 @@ export class Store {
     async deleteOngoingRegistration(roomId: RoomId): Promise<void> {
         await this.keyv.delete(this.ongoingRegistrationKey(roomId));
     }
+}
+
+export interface FediverseConfigRepository {
+    get(hostname: string): Promise<FediverseConfig | undefined>;
+    add(fediverseConfig: FediverseConfig): Promise<void>;
 }
