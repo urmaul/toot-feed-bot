@@ -31,7 +31,7 @@ export class Store {
 
         this.keyv = new Keyv({ store, serialize, deserialize, namespace: 'bot' });
         this.keyv.on('error', err => logger.error('Store Error', err));
-        this.subscriptions = new Keyv({ store, serialize, deserialize, namespace: 'subscriptions' });
+        this.subscriptions = new Keyv({ store, serialize, deserialize, namespace: 'subscription' });
         this.subscriptions.on('error', err => logger.error('Subscriptions store Error', err));
 
         const fediverseConfigKey = (hostname: string) => `fediverseConfig:${hostname}`;
