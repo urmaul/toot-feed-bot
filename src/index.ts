@@ -107,8 +107,10 @@ async function run() {
 	});
 
 	matrix.onCommand('stop', async (_: string, roomId: RoomId) => {
+		const subscription = await store.getSubscription(roomId);
+
 		await store.deleteSubscription(roomId);
-		logger.info('Deleted subscripion');
+		logger.info('Deleted subscription');
 
 		let ongoingStream = ongoing.get(roomId.value);
 		if (ongoingStream) {
@@ -117,7 +119,20 @@ async function run() {
 			ongoing.delete(roomId.value);
 		}
 
-		return 'Subscripton stopped. All data deleted.';
+		// Try to revoke access token
+		if (subscription !== undefined) {
+			const fediverseConfig = await store.fediverseConfigs.get(subscription.instanceRef.hostname);
+			if (fediverseConfig !== undefined) {
+				try {
+					const subscriptionCient = initSubscriptionClient(subscription.instanceRef, subscription.accessToken);
+					subscriptionCient.revokeToken(fediverseConfig.clientId, fediverseConfig.clientSecret, subscription.accessToken);
+				} catch (error) {
+					logger.warn(`Error while revoking a token`, error)
+				}
+			}
+		}
+
+		return 'Subscription stopped. All data deleted.';
 	});
 
 	// ----- Subscriptions

@@ -36,15 +36,8 @@ export class Store {
 
         const fediverseConfigKey = (hostname: string) => `fediverseConfig:${hostname}`;
         this.fediverseConfigs = {
-            get: async (hostname: string): Promise<FediverseConfig | undefined> => {
-                try {
-                    return await this.keyv.get(fediverseConfigKey(hostname));
-                } catch (error) {
-                    logger.error(`Error while getting FediverseConfig for ${hostname}`, error);
-                    // Fallback to undefined
-                    return undefined;
-                }
-            },
+            get: (hostname: string): Promise<FediverseConfig | undefined> =>
+                this.tryGet(fediverseConfigKey(hostname)),
             add: async (fediverseConfig: FediverseConfig): Promise<void> => {
                 await this.keyv.set(fediverseConfigKey(fediverseConfig.ref.hostname), fediverseConfig);
             }
@@ -53,6 +46,16 @@ export class Store {
 
     private hash(roomId: RoomId): string {
         return CryptoJS.SHA256(roomId.value).toString(CryptoJS.enc.Base64);
+    }
+
+    private async tryGet(key: string): Promise<any | undefined> {
+        try {
+            return await this.keyv.get(key);
+        } catch (error) {
+            logger.error(`Error while getting ${key}`, error);
+            // Fallback to undefined
+            return undefined;
+        }
     }
 
     // -- Max status ids --
