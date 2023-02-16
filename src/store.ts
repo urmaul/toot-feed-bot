@@ -38,9 +38,8 @@ export class Store {
         this.fediverseConfigs = {
             get: (hostname: string): Promise<FediverseConfig | undefined> =>
                 this.tryGet(fediverseConfigKey(hostname)),
-            add: async (fediverseConfig: FediverseConfig): Promise<void> => {
-                await this.keyv.set(fediverseConfigKey(fediverseConfig.ref.hostname), fediverseConfig);
-            }
+            add: (fediverseConfig: FediverseConfig): Promise<void> => 
+                this.trySet(fediverseConfigKey(fediverseConfig.ref.hostname), fediverseConfig),
         };
     }
 
@@ -58,22 +57,24 @@ export class Store {
         }
     }
 
+    private async trySet(key: string, value: any): Promise<void> {
+        try {
+            await this.keyv.set(key, value);
+        } catch (error) {
+            logger.error(`Error while setting ${key}`, error);
+        }
+    }
+
     // -- Max status ids --
 
     private maxStatusIdKey(roomId: RoomId): string {
         return `maxStatusId:${this.hash(roomId)}`;
     }
-    async getMaxStatusId(roomId: RoomId): Promise<string | undefined> {
-        try {
-            return await this.keyv.get(this.maxStatusIdKey(roomId));
-        } catch (error) {
-            logger.error(`Error while getting maxStatusId for ${this.hash(roomId)}`, error);
-            // Fallback to undefined
-            return undefined;
-        }
+    getMaxStatusId(roomId: RoomId): Promise<string | undefined> {
+        return this.tryGet(this.maxStatusIdKey(roomId));
     }
-    async setMaxStatusId(roomId: RoomId, newValue: string | undefined): Promise<void> {
-        await this.keyv.set(this.maxStatusIdKey(roomId), newValue);
+    setMaxStatusId(roomId: RoomId, newValue: string | undefined): Promise<void> {
+        return this.trySet(this.maxStatusIdKey(roomId), newValue);
     }
 
     // -- Max notification ids --
@@ -82,16 +83,10 @@ export class Store {
         return `maxNotificationId:${this.hash(roomId)}`;
     }
     async getMaxNotificationId(roomId: RoomId): Promise<string | undefined> {
-        try {
-            return await this.keyv.get(this.maxNotificationIdKey(roomId));
-        } catch (error) {
-            logger.error(`Error while getting maxNotificationId for ${this.hash(roomId)}`, error);
-            // Fallback to undefined
-            return undefined;
-        }
+        return this.tryGet(this.maxNotificationIdKey(roomId));
     }
     async setMaxNotificationId(roomId: RoomId, newValue: string | undefined): Promise<void> {
-        await this.keyv.set(this.maxNotificationIdKey(roomId), newValue);
+        return this.trySet(this.maxNotificationIdKey(roomId), newValue);
     }
 
     // -- Subscriptions --
@@ -132,17 +127,11 @@ export class Store {
     }
 
     async addOngoingRegistration(registration: OngoingRegistration): Promise<void> {
-        await this.keyv.set(this.ongoingRegistrationKey(registration.roomId), registration);
+        return this.trySet(this.ongoingRegistrationKey(registration.roomId), registration);
     }
 
     async getOngoingRegistration(roomId: RoomId): Promise<OngoingRegistration | undefined> {
-        try {
-            return await this.keyv.get(this.ongoingRegistrationKey(roomId));
-        } catch (error) {
-            logger.error(`Error while getting OngoingRegistration for ${this.hash(roomId)}`, error);
-            // Fallback to undefined
-            return undefined;
-        }
+        return this.tryGet(this.ongoingRegistrationKey(roomId));
     }
 
     async deleteOngoingRegistration(roomId: RoomId): Promise<void> {
