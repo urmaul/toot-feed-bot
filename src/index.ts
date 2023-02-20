@@ -18,6 +18,17 @@ async function run() {
 	// Save FediverseConfig from configuration
 	store.fediverseConfigs.add(configs.fediverse);
 
+	// ----- Helper function
+
+	const stopOngoingStream = (roomId: RoomId) => {
+		let ongoingStream = ongoing.get(roomId.value);
+		if (ongoingStream) {
+			ongoingStream.stop();
+			ongoingStream.removeAllListeners();
+			ongoing.delete(roomId.value);
+		}
+	};
+
 	// ----- Matrix bot
 
 	const matrix = await initMatrixBot(configs.matrix);
@@ -122,12 +133,7 @@ async function run() {
 		await store.deleteSubscription(roomId);
 		logger.info('Deleted subscription');
 
-		let ongoingStream = ongoing.get(roomId.value);
-		if (ongoingStream) {
-			ongoingStream.stop();
-			ongoingStream.removeAllListeners();
-			ongoing.delete(roomId.value);
-		}
+		stopOngoingStream(roomId);
 
 		// Try to revoke access token
 		if (subscription !== undefined) {
@@ -232,14 +238,12 @@ async function run() {
 			stream.on('notification', (notification: Entity.Notification) => handleNotifications([notification]));
 			stream.on('error', (err: Error) => {
 				logger.error(`Stream error on ${subscription.roomId.value}`, err);
-				stream.stop();
-				stream.removeAllListeners();
-				ongoing.delete(subscription.roomId.value);
+				stopOngoingStream(subscription.roomId);
 			});
 			stream.on('heartbeat', () => logger.debug(`Heartbeat on ${subscription.roomId.value}`));
 			stream.on('close', () => {
 				logger.info(`Stream closed on ${subscription.roomId.value}`)
-				ongoing.delete(subscription.roomId.value);
+				stopOngoingStream(subscription.roomId);
 			});
 			stream.on('parser-error', (err: Error) => logger.warn(`Stream parser error on ${subscription.roomId.value}`, err));
 
