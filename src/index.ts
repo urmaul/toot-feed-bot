@@ -230,7 +230,12 @@ async function run() {
 			stream.on('connect', () => logger.debug(`Stream connected on ${subscription.roomId.value}`));
 			stream.on('update', (status: Entity.Status) => handleStatuses([status]));
 			stream.on('notification', (notification: Entity.Notification) => handleNotifications([notification]));
-			stream.on('error', (err: Error) => logger.error(`Stream error on ${subscription.roomId.value}`, err));
+			stream.on('error', (err: Error) => {
+				logger.error(`Stream error on ${subscription.roomId.value}`, err);
+				stream.stop();
+				stream.removeAllListeners();
+				ongoing.delete(subscription.roomId.value);
+			});
 			stream.on('heartbeat', () => logger.debug(`Heartbeat on ${subscription.roomId.value}`));
 			stream.on('close', () => {
 				logger.info(`Stream closed on ${subscription.roomId.value}`)
