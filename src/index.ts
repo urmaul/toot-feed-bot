@@ -1,17 +1,16 @@
 'use strict';
 
-import { detectSNS, initFediverseClient, initStreamingClient, initSubscriptionClient, isMastodon, isPleroma } from './fediverse';
+import { createFediverseApp, initFediverseClient, initStreamingClient, initSubscriptionClient, isMastodon, isPleroma, SourceClient } from './fediverse';
 import { initMatrixBot } from './matrix';
 import { logger } from './logger';
 import loadConfigs from './config';
-import { WebSocketInterface } from 'megalodon';
+import { MegalodonInterface, WebSocketInterface } from 'megalodon';
 import { Store } from './store';
-import { InstanceRef, RoomId } from './types';
+import { RoomId } from './types';
 
 const configs = loadConfigs();
 
 async function run() {
-	const supportedInstance: InstanceRef = configs.fediverse.ref;
 	const store = new Store(configs.store);
 	let ongoing: Map<string, WebSocketInterface> = new Map();
 
@@ -29,6 +28,18 @@ async function run() {
 		}
 	};
 
+	const retrieveFediverseClient = async (url: URL): Promise<SourceClient<MegalodonInterface>> => {
+		const fediverseConfig = await store.fediverseConfigs.get(url.hostname);
+		if (fediverseConfig) {
+			return initFediverseClient(fediverseConfig);
+		}
+
+		// No fediverse config yet, create it
+		const newConfig = await createFediverseApp(url, configs.app.name);
+		await store.fediverseConfigs.add(newConfig);
+		return initFediverseClient(newConfig);
+	}
+
 	// ----- Matrix bot
 
 	const matrix = await initMatrixBot(configs.matrix);
@@ -36,36 +47,34 @@ async function run() {
 	matrix.onCommand('reg', async (url: string, roomId: RoomId) => {
 		try {
 			const urlObject = new URL(url);
-			const fediverseConfig = await store.fediverseConfigs.get(urlObject.hostname);
-			if (fediverseConfig == undefined) {
-				const sns = await detectSNS(urlObject.hostname);
-				logger.info(`Processing registration for ${sns} on ${urlObject.hostname}`);
+
+			try {
+				const fediverse = await retrieveFediverseClient(urlObject);
+
+				if (isMastodon(fediverse) || isPleroma(fediverse)) {
+					const authUrl = await fediverse.client.generateAuthUrl(
+						fediverse.config.clientId,
+						fediverse.config.clientSecret,
+						{ scope: ['read'] }
+					);
+		
+					store.addOngoingRegistration({
+						roomId,
+						instanceRef: fediverse.config.ref,
+					});
+		
+					return `Login url: ${authUrl}<br>` +
+						'Please copy the authorization token you get after logging in ' +
+						'and run command: <pre>!auth &lt;token&gt;</pre>';
+				}
 	
-				return `Error: Currently only https://${supportedInstance.hostname} is supported`;
+				// Should never happen
+				logger.error(`Trying to create a login url for unsupported SNS ${fediverse.config.ref.sns} of ${fediverse.config.ref.hostname}`);
+				return `Error: Engine ${fediverse.config.ref.sns} of ${fediverse.config.ref.hostname} not supported.`;
+
+			} catch (error) {
+				return `Error: Could not connect to the fediverse server`;
 			}
-
-			const fediverse = initFediverseClient(fediverseConfig);
-
-			if (isMastodon(fediverse) || isPleroma(fediverse)) {
-				const authUrl = await fediverse.client.generateAuthUrl(
-					fediverse.config.clientId,
-					fediverse.config.clientSecret,
-					{ scope: ['read'] }
-				);
-	
-				store.addOngoingRegistration({
-					roomId,
-					instanceRef: fediverseConfig.ref,
-				});
-	
-				return `Login url: ${authUrl}<br>` +
-					'Please copy the authorization token you get after logging in ' +
-					'and run command: <pre>!auth &lt;token&gt;</pre>';
-			}
-
-			// Should never happen
-			logger.error(`Trying to create a login url for unsupported SNS ${fediverse.config.ref.sns} of ${fediverse.config.ref.hostname}`);
-			return `Error: Engine ${fediverse.config.ref.sns} of ${fediverse.config.ref.hostname} not supported.`;
 
 		} catch (error) {
 			return 'Usage: <pre>!reg &lt;FediverseServerUrl&gt;</pre>';
