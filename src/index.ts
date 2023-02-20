@@ -1,6 +1,6 @@
 'use strict';
 
-import { initFediverseClient, initStreamingClient, initSubscriptionClient } from './fediverse';
+import { initFediverseClient, initStreamingClient, initSubscriptionClient, isPleroma } from './fediverse';
 import { initMatrixBot } from './matrix';
 import { logger } from './logger';
 import loadConfigs from './config';
@@ -27,27 +27,34 @@ async function run() {
 			const urlObject = new URL(url);
 			const fediverseConfig = await store.fediverseConfigs.get(urlObject.hostname);
 			if (fediverseConfig == undefined) {
-				return Promise.resolve(`Currently only https://${supportedInstance.hostname} is supported`);
+				return `Error: Currently only https://${supportedInstance.hostname} is supported`;
 			}
 
 			const fediverse = initFediverseClient(fediverseConfig);
-			const pleromaClient = fediverse.client as Pleroma
-			const authUrl = await pleromaClient.generateAuthUrl(
-				fediverse.config.clientId,
-				fediverse.config.clientSecret,
-				{ scope: ['read'] }
-			);
 
-			store.addOngoingRegistration({
-				roomId,
-				instanceRef: fediverseConfig.ref,
-			});
+			if (isPleroma(fediverse)) {
+				const authUrl = await fediverse.client.generateAuthUrl(
+					fediverse.config.clientId,
+					fediverse.config.clientSecret,
+					{ scope: ['read'] }
+				);
+	
+				store.addOngoingRegistration({
+					roomId,
+					instanceRef: fediverseConfig.ref,
+				});
+	
+				return `Login url: ${authUrl}<br>` +
+					'Please copy the authorization token you get after logging in ' +
+					'and run command: <pre>!auth &lt;token&gt;</pre>';
+			}
 
-			return `Login url: ${authUrl}<br>` +
-				'Please copy the authorization token you get after logging in ' +
-				'and run command: <pre>!auth &lt;token&gt;</pre>';
+			// Should never happen
+			logger.error(`Trying to create a login url for unsupported SNS ${fediverse.config.ref.sns} of ${fediverse.config.ref.hostname}`);
+			return `Error: Engine ${fediverse.config.ref.sns} of ${fediverse.config.ref.hostname} not supported.`;
+
 		} catch (error) {
-			return Promise.resolve('Usage: <pre>!reg &lt;FediverseServerUrl&gt;</pre>');
+			return 'Usage: <pre>!reg &lt;FediverseServerUrl&gt;</pre>';
 		}
 	});
 

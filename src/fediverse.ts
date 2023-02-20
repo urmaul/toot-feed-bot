@@ -1,4 +1,4 @@
-import generator, { MegalodonInterface, WebSocketInterface } from 'megalodon';
+import generator, { MegalodonInterface, Pleroma, WebSocketInterface } from 'megalodon';
 import { InstanceRef } from './types';
 
 export interface FediverseConfig {
@@ -7,14 +7,18 @@ export interface FediverseConfig {
     clientSecret: string;
 }
 
-export interface SourceClient {
-    client: MegalodonInterface;
+export interface SourceClient<Client extends MegalodonInterface> {
+    client: Client;
     config: FediverseConfig;
 }
 
-export function initFediverseClient(config: FediverseConfig): SourceClient {
+export function initFediverseClient(config: FediverseConfig): SourceClient<MegalodonInterface> {
 	const client = generator(config.ref.sns, `https://${config.ref.hostname}`);
 	return { client, config };
+}
+
+export function isPleroma(client: SourceClient<MegalodonInterface>): client is SourceClient<Pleroma> {
+    return client.config.ref.sns == "pleroma";
 }
 
 export function initSubscriptionClient(config: InstanceRef, accessToken: string): MegalodonInterface {
