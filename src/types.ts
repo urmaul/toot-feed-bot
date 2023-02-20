@@ -1,5 +1,5 @@
 export interface InstanceRef {
-    sns: 'pleroma';
+    sns: 'pleroma' | 'mastodon';
     hostname: string;
 }
 

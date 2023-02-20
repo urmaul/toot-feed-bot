@@ -1,6 +1,6 @@
 'use strict';
 
-import { initFediverseClient, initStreamingClient, initSubscriptionClient, isPleroma } from './fediverse';
+import { initFediverseClient, initStreamingClient, initSubscriptionClient, isMastodon, isPleroma } from './fediverse';
 import { initMatrixBot } from './matrix';
 import { logger } from './logger';
 import loadConfigs from './config';
@@ -32,7 +32,7 @@ async function run() {
 
 			const fediverse = initFediverseClient(fediverseConfig);
 
-			if (isPleroma(fediverse)) {
+			if (isMastodon(fediverse) || isPleroma(fediverse)) {
 				const authUrl = await fediverse.client.generateAuthUrl(
 					fediverse.config.clientId,
 					fediverse.config.clientSecret,
