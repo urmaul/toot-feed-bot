@@ -5,7 +5,6 @@ import {
 	RichReply,
 	RustSdkCryptoStorageProvider,
 } from 'matrix-bot-sdk';
-import { type } from 'os';
 import { logger } from './logger';
 import { renderNotification, renderStatus } from './render';
 import { newRoomId, RoomId } from './types';
@@ -32,39 +31,32 @@ export class MatrixBot {
 		this.client.on('room.message', this.handleCommand.bind(this));
 	}
 
-	async sendStatus(roomId: RoomId, status: Entity.Status): Promise<void> {
+	/** Handles retryAfterMs error thrown within `f`. */
+	private async tryBackedOff(f: () => Promise<any>): Promise<void> {
 		try {
-			const message = renderStatus(status);
-			await this.client.sendHtmlText(roomId.value, message);
+			await f();
 		} catch (error) {
 			const retryAfterMs = (error as any).retryAfterMs;
 			if (retryAfterMs) {
 				// If error tells us to retry => wait and retry
-				logger.debug(`Sending status error. Waiting to retry after ${retryAfterMs}ms`);
+				logger.debug(`Matrix backoff error. Waiting to retry after ${retryAfterMs}ms`);
 				await this.sleep(retryAfterMs);
-				return this.sendStatus(roomId, status);
+				await f();
 			} else {
 				throw error;
 			}
 		}
 	}
 
+	async sendStatus(roomId: RoomId, status: Entity.Status): Promise<void> {
+		const message = renderStatus(status);
+		return this.tryBackedOff(() => this.client.sendHtmlText(roomId.value, message));
+	}
+
 	async sendNotification(roomId: RoomId, notification: Entity.Notification): Promise<void> {
-		try {
-			const message = renderNotification(notification);
-			if (message) {
-				await this.client.sendHtmlText(roomId.value, message);
-			}
-		} catch (error) {
-			const retryAfterMs = (error as any).retryAfterMs;
-			if (retryAfterMs) {
-				// If error tells us to retry => wait and retry
-				logger.debug(`Sending notification error. Waiting to retry after ${retryAfterMs}ms`);
-				await this.sleep(retryAfterMs);
-				return this.sendNotification(roomId, notification);
-			} else {
-				throw error;
-			}
+		const message = renderNotification(notification);
+		if (message) {
+			await this.tryBackedOff(() => this.client.sendHtmlText(roomId.value, message));
 		}
 	}
 
@@ -73,8 +65,6 @@ export class MatrixBot {
 	}
 
 	private async handleCommand(roomId, event) {
-		logger.debug(`${roomId} ${JSON.stringify(event)}`)
-
 		// Don't handle events that don't have contents (they were probably redacted)
 		if (!event['content']) return;
 
@@ -99,7 +89,8 @@ export class MatrixBot {
 				if (replyBody) {
 					const reply = RichReply.createFor(roomId, event, replyBody, replyBody);
 					reply['msgtype'] = 'm.notice';
-					this.client.sendMessage(roomId, reply);
+
+					await this.tryBackedOff(() => this.client.sendMessage(roomId, reply));
 				}
 	
 			} else {
