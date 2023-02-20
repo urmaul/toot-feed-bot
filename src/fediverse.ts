@@ -1,5 +1,5 @@
-import generator, { Mastodon, MegalodonInterface, Pleroma, WebSocketInterface } from 'megalodon';
-import { InstanceRef } from './types';
+import generator, { detector, Mastodon, MegalodonInterface, Pleroma, WebSocketInterface } from 'megalodon';
+import { InstanceRef, SNS } from './types';
 
 export interface FediverseConfig {
     ref: InstanceRef;
@@ -32,4 +32,13 @@ export function initSubscriptionClient(config: InstanceRef, accessToken: string)
 export function initStreamingClient(config: InstanceRef, accessToken: string): WebSocketInterface {
     const streamingClient = generator(config.sns, `wss://${config.hostname}`, accessToken);
     return streamingClient.userSocket();
+}
+
+export async function detectSNS(hostname: string): Promise<SNS> {
+    try {
+        return detector(`https://${hostname}`);
+    } catch (error) {
+        // Fallback to mastodon as the most supported API
+        return Promise.resolve('mastodon');
+    }
 }

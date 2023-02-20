@@ -1,10 +1,10 @@
 'use strict';
 
-import { initFediverseClient, initStreamingClient, initSubscriptionClient, isMastodon, isPleroma } from './fediverse';
+import { detectSNS, initFediverseClient, initStreamingClient, initSubscriptionClient, isMastodon, isPleroma } from './fediverse';
 import { initMatrixBot } from './matrix';
 import { logger } from './logger';
 import loadConfigs from './config';
-import { Pleroma, WebSocketInterface } from 'megalodon';
+import { WebSocketInterface } from 'megalodon';
 import { Store } from './store';
 import { InstanceRef, RoomId } from './types';
 
@@ -27,6 +27,9 @@ async function run() {
 			const urlObject = new URL(url);
 			const fediverseConfig = await store.fediverseConfigs.get(urlObject.hostname);
 			if (fediverseConfig == undefined) {
+				const sns = await detectSNS(urlObject.hostname);
+				logger.info(`Processing registration for ${sns} on ${urlObject.hostname}`);
+	
 				return `Error: Currently only https://${supportedInstance.hostname} is supported`;
 			}
 
