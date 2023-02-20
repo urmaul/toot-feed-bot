@@ -14,10 +14,7 @@ async function run() {
 	const store = new Store(configs.store);
 	let ongoing: Map<string, WebSocketInterface> = new Map();
 
-	// Save FediverseConfig from configuration
-	store.fediverseConfigs.add(configs.fediverse);
-
-	// ----- Helper function
+	// ----- Helper functions
 
 	const stopOngoingStream = (roomId: RoomId) => {
 		let ongoingStream = ongoing.get(roomId.value);

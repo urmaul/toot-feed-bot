@@ -21,14 +21,6 @@ export default () => {
             // You will have do delete the database when changing it
             secret: env.get('STORE_SECRET').default('').asString(),
         },
-        fediverse: {
-            ref: {
-                sns: env.get('FEDIVERSE_SNS').required().asEnum(['pleroma']),
-                hostname: env.get('FEDIVERSE_BASE_URL').required().asUrlObject().hostname,
-            },
-            clientId: env.get('FEDIVERSE_CLIENT_ID').required().asString(),
-            clientSecret: env.get('FEDIVERSE_CLIENT_SECRET').required().asString(),
-        },
         matrix: {
             serverUrl: env.get('MATRIX_SERVER_URL').required().asUrlObject().origin,
             accessToken: env.get('MATRIX_ACCESS_TOKEN').required().asString(),
