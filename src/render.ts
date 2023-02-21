@@ -5,16 +5,20 @@ import { Entity } from 'megalodon';
 const typeIcons = {'image': '🖼', 'video': '🎞️'};
 
 export function renderStatus(status: Entity.Status, titleTemplate: string = '{}'): string {
+    let name = `<b>${accountName(status.account)}` + (status.reblog ? ` ♻️ ${accountName(status.reblog.account)}` : '') + `</b>`;
     let title = summary(
-        titleTemplate.replace(
-            '{}',
-            `<b>${accountName(status.account)}` + (status.reblog ? ` ♻️ ${accountName(status.reblog.account)}` : '') + `</b>`
-        ),
+        titleTemplate.replace('{}', name),
         `<p>🆔 <code>${status.id}</code><br>🔗 ${unlink(status.uri)}</p>` +
         accountInfo(status.account) +
         (status.reblog ? accountInfo(status.reblog.account) : '')
     );
 
+    let content = status.reblog ? renderStatusContent(status.reblog) : renderStatusContent(status);
+
+    return title + content;
+}
+
+function renderStatusContent(status: Entity.Status): string {
     let content = unlinkMentions(status.content);
 
     let blocks: string[] = [];
@@ -33,7 +37,7 @@ export function renderStatus(status: Entity.Status, titleTemplate: string = '{}'
         blocks.push(renderPoll(poll));
     }
     
-	return title + content + blocks.join('<br>');
+	return content + blocks.join('<br>');
 }
 
 export function unlinkMentions(content: string): string {
