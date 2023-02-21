@@ -66,7 +66,8 @@ export function accountInfo(account: Entity.Account): string {
 }
 
 function renderMediaAttachment(media: Entity.Attachment): string {
-    return `<a href="${media.remote_url}">${mediaIcon(media)} ${media.description || media.remote_url}</a>`;
+    const url = media.remote_url || media.url;
+    return `<a href="${url}">${mediaIcon(media)} ${media.description || url}</a>`;
 }
 
 function mediaIcon(media: Entity.Attachment): string {
