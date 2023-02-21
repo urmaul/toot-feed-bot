@@ -8,7 +8,7 @@ export function renderStatus(status: Entity.Status, titleTemplate: string = '{}'
     let title = summary(
         titleTemplate.replace(
             '{}',
-            `<b>${status.account.display_name}` + (status.reblog ? ` ♻️ ${status.reblog.account.display_name}` : '') + `</b>`
+            `<b>${accountName(status.account)}` + (status.reblog ? ` ♻️ ${accountName(status.reblog.account)}` : '') + `</b>`
         ),
         `<p>id: <code>${status.id}</code><br>${unlink(status.uri)}</p>` +
         accountInfo(status.account) +
@@ -49,13 +49,16 @@ function unlink(text: string): string {
     return text.replace(/\bhttps?:\/\//g, '');
 }
 
+function accountName(account: Entity.Account): string {
+    return account.display_name || account.username;
+}
+
 export function accountInfo(account: Entity.Account): string {
     const noteHtml = parse(account.note);
-    const name = account.display_name || account.username;
     const link = unlink(account.url);
     const noteText = unlink(noteHtml.structuredText);
 
-    return `<p><b>${name}</b> ${link}<br>${noteText}</p>`;
+    return `<p><b>${accountName(account)}</b> ${link}${noteText && '<br>'}${noteText}</p>`;
 }
 
 function renderMediaAttachment(media: Entity.Attachment): string {

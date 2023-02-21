@@ -43,7 +43,7 @@ describe('render', () => {
         expect(actual).to.equal(expected);
     });
 
-    specify('accountInfo', () => {
+    describe('accountInfo', () => {
         const account: Entity.Account = {
             id: 'AAA',
             username: 'john',
@@ -65,8 +65,21 @@ describe('render', () => {
             fields: [],
             bot: false,
         };
-        const expected = '<p><b>John Mastodon</b> mastodon.test/@john<br>John Mastodon, a mammal\nmastodon.test/@john\njohnmastodon.test/</p>';
-        const actual = accountInfo(account);
-        expect(actual).to.equal(expected);
+
+        it('renders a normal account with links in note', () => {
+            const actual = accountInfo(account);
+            const expected = '<p><b>John Mastodon</b> mastodon.test/@john<br>John Mastodon, a mammal\nmastodon.test/@john\njohnmastodon.test/</p>';
+            expect(actual).to.equal(expected);
+        });
+
+        it('renders an account with empty display_name and note', () => {
+            const actual = accountInfo({
+                ...account,
+                display_name: '',
+                note: '',
+            });
+            const expected = '<p><b>john</b> mastodon.test/@john</p>';
+            expect(actual).to.equal(expected);
+        });
     });
 });
