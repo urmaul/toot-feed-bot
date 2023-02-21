@@ -51,10 +51,11 @@ function unlink(text: string): string {
 
 export function accountInfo(account: Entity.Account): string {
     const noteHtml = parse(account.note);
+    const name = account.display_name || account.username;
     const link = unlink(account.url);
     const noteText = unlink(noteHtml.structuredText);
 
-    return `<p><b>${account.display_name}</b> ${link}<br>${noteText}</p>`;
+    return `<p><b>${name}</b> ${link}<br>${noteText}</p>`;
 }
 
 function renderMediaAttachment(media: Entity.Attachment): string {
@@ -100,7 +101,7 @@ export function renderNotification(notification: Entity.Notification): string | 
             `🔔❤️ <b>${notification.account.display_name}</b> favourited your toot from ${notification.status.created_at}`,
             `<p>${unlink(notification.status.uri)}</p>` +
             accountInfo(notification.account) +
-            (notification.status.plain_content || unlinkMentions(notification.status.content))
+            '<p>' + (notification.status.plain_content || unlinkMentions(notification.status.content)) + '</p>'
         );
     } else {
         logger.debug(`Unknown notification type ${notification.type}`, notification);
