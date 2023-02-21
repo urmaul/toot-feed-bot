@@ -1,5 +1,4 @@
 import env from 'env-var';
-import { newRoomId } from './types';
 
 export default () => {
     const dataDir = env.get('APP_DATA_DIR').default('./data').asString();
