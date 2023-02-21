@@ -2,8 +2,6 @@
 
 A bot that forwards toots from your Fediverse feed to your matrix inbox.
 
-It's in active development and nothing is stable. It is also usable if you manage to configure it. Currently supports only a single subscription on a Pleroma server. Check [config.ts](https://github.com/urmaul/toot-feed-bot/blob/main/src/config.ts) to see required configuration values.
-
 ## Installation
 
 The easiest way to run it is via Docker.
@@ -26,7 +24,14 @@ TBD
 
 ### Commands
 
-TBD
+You can send commands by messaging them in the same woom with bot.
+
+Supported commands are:
+
+* `!reg <FediverseServerUrl>` generates a login link at the provided server.
+* `!auth <token>` finishes logging in using provided auth token.
+* `!retrieve <id>` retrieves and posts a toot by the instance internal id. Used for debugging.
+* `!stops` stops the subscription, deletes all data, and revokes the access token.
 
 ## What about security?
 
