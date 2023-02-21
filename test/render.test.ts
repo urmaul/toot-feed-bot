@@ -68,7 +68,7 @@ describe('render', () => {
 
         it('renders a normal account with links in note', () => {
             const actual = accountInfo(account);
-            const expected = '<p><b>John Mastodon</b> mastodon.test/@john<br>John Mastodon, a mammal\nmastodon.test/@john\njohnmastodon.test/</p>';
+            const expected = '<p>👤 <b>John Mastodon</b> mastodon.test/@john<br>John Mastodon, a mammal\nmastodon.test/@john\njohnmastodon.test/</p>';
             expect(actual).to.equal(expected);
         });
 
@@ -78,7 +78,7 @@ describe('render', () => {
                 display_name: '',
                 note: '',
             });
-            const expected = '<p><b>john</b> mastodon.test/@john</p>';
+            const expected = '<p>👤 <b>john</b> mastodon.test/@john</p>';
             expect(actual).to.equal(expected);
         });
     });

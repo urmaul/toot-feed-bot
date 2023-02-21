@@ -10,7 +10,7 @@ export function renderStatus(status: Entity.Status, titleTemplate: string = '{}'
             '{}',
             `<b>${accountName(status.account)}` + (status.reblog ? ` ♻️ ${accountName(status.reblog.account)}` : '') + `</b>`
         ),
-        `<p>id: <code>${status.id}</code><br>${unlink(status.uri)}</p>` +
+        `<p>🆔 <code>${status.id}</code><br>🔗 ${unlink(status.uri)}</p>` +
         accountInfo(status.account) +
         (status.reblog ? accountInfo(status.reblog.account) : '')
     );
@@ -58,7 +58,7 @@ export function accountInfo(account: Entity.Account): string {
     const link = unlink(account.url);
     const noteText = unlink(noteHtml.structuredText);
 
-    return `<p><b>${accountName(account)}</b> ${link}${noteText && '<br>'}${noteText}</p>`;
+    return `<p>👤 <b>${accountName(account)}</b> ${link}${noteText && '<br>'}${noteText}</p>`;
 }
 
 function renderMediaAttachment(media: Entity.Attachment): string {
@@ -102,7 +102,7 @@ export function renderNotification(notification: Entity.Notification): string | 
     } else if (notification.type == 'favourite' && notification.account && notification.status) {
         return summary(
             `🔔❤️ <b>${notification.account.display_name}</b> favourited your toot from ${notification.status.created_at}`,
-            `<p>${unlink(notification.status.uri)}</p>` +
+            `<p>🔗 ${unlink(notification.status.uri)}</p>` +
             accountInfo(notification.account) +
             '<p>' + (notification.status.plain_content || unlinkMentions(notification.status.content)) + '</p>'
         );
