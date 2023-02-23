@@ -109,7 +109,7 @@ export function renderNotification(notification: Entity.Notification): string | 
             `🔔❤️ <b>${notification.account.display_name}</b> favourited your toot from ${notification.status.created_at}`,
             `<p>🔗 ${unlink(notification.status.uri)}</p>` +
             accountInfo(notification.account) +
-            '<p>' + (notification.status.plain_content || unlinkMentions(notification.status.content)) + '</p>'
+            '<p>💬 ' + (notification.status.plain_content || unlinkMentions(notification.status.content)) + '</p>'
         );
     } else {
         logger.debug(`Unknown notification type ${notification.type}`, notification);
