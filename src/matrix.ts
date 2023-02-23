@@ -19,6 +19,7 @@ export interface MatrixConfig {
 }
 
 type CommandHandler = (body: string, roomId: RoomId) => Promise<string | undefined>
+type EventHandler = (roomId: RoomId) => Promise<string | undefined>
 
 export class MatrixBot {
 	readonly client: MatrixClient;
@@ -102,6 +103,15 @@ export class MatrixBot {
 
 	onCommand(command: string, handler: CommandHandler): void {
 		this.commandHandlers.set(command, handler);
+	}
+
+	onEvent(event: string, handler: EventHandler): void {
+		this.client.on(event, async (roomId: string, body: any) => {
+			const message = await handler(newRoomId(roomId));
+			if (message) {
+				this.client.sendHtmlText(roomId, message);
+			}
+		});
 	}
 }
 

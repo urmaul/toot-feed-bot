@@ -55,7 +55,7 @@ You can send commands by messaging them in the same woom with bot.
 
 Supported commands are:
 
-* `!reg <FediverseServerUrl>` generates a login link at the provided server.
+* `!reg <FediverseServerUrl>` starts a login process at the provided server.
 * `!auth <token>` finishes logging in using provided auth token.
 * `!retrieve <id>` retrieves and posts a toot by the instance internal id. Used for debugging.
 * `!stop` stops the subscription, deletes all data, and revokes the access token.

@@ -37,9 +37,42 @@ async function run() {
 		return initFediverseClient(newConfig);
 	}
 
+	const deleteSubscription = async (roomId: RoomId): Promise<void> => {
+		const subscription = await store.getSubscription(roomId);
+
+		await store.deleteSubscription(roomId);
+		logger.info('Deleted subscription');
+
+		stopOngoingStream(roomId);
+
+		// Try to revoke access token
+		if (subscription !== undefined) {
+			const fediverseConfig = await store.fediverseConfigs.get(subscription.instanceRef.hostname);
+			if (fediverseConfig !== undefined) {
+				try {
+					const subscriptionCient = initSubscriptionClient(subscription.instanceRef, subscription.accessToken);
+					subscriptionCient.revokeToken(fediverseConfig.clientId, fediverseConfig.clientSecret, subscription.accessToken);
+				} catch (error) {
+					logger.warn(`Error while revoking a token`, error)
+				}
+			}
+		}
+	}
+
 	// ----- Matrix bot
 
 	const matrix = await initMatrixBot(configs.matrix);
+
+	matrix.onEvent('room.join', () => Promise.resolve(`
+		<p>Hello! I am ${configs.app.name}. I can forward your Fediverse feed to this room.</p>
+		<p>Start by posting a <code>!reg &lt;FediverseServerUrl&gt;</code> message where <code>&lt;FediverseServerUrl&gt;</code> is the URL of your fediverse instance.</p>
+		<p>You can delete all your data anytime by posting a <code>!stop</code> message.</p>
+	`));
+
+	matrix.onEvent('room.leave', async (roomId: RoomId) => {
+		await deleteSubscription(roomId);
+		return undefined;
+	});
 
 	matrix.onCommand('reg', async (url: string, roomId: RoomId) => {
 		try {
@@ -134,26 +167,7 @@ async function run() {
 	});
 
 	matrix.onCommand('stop', async (_: string, roomId: RoomId) => {
-		const subscription = await store.getSubscription(roomId);
-
-		await store.deleteSubscription(roomId);
-		logger.info('Deleted subscription');
-
-		stopOngoingStream(roomId);
-
-		// Try to revoke access token
-		if (subscription !== undefined) {
-			const fediverseConfig = await store.fediverseConfigs.get(subscription.instanceRef.hostname);
-			if (fediverseConfig !== undefined) {
-				try {
-					const subscriptionCient = initSubscriptionClient(subscription.instanceRef, subscription.accessToken);
-					subscriptionCient.revokeToken(fediverseConfig.clientId, fediverseConfig.clientSecret, subscription.accessToken);
-				} catch (error) {
-					logger.warn(`Error while revoking a token`, error)
-				}
-			}
-		}
-
+		await deleteSubscription(roomId);
 		return 'Subscription stopped. All data deleted.';
 	});
 
