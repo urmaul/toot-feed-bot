@@ -54,7 +54,7 @@
     "crypto-js": "^4.1.1",
     "env-var": "^7.3.0",
     "keyv": "^4.5.2",
-    "matrix-bot-sdk": "^0.6.4",
+    "matrix-bot-sdk": "^0.6.5",
     "megalodon": "^5.4.4",
     "node-html-parser": "^6.1.5"
   }
