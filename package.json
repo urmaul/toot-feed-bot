@@ -52,7 +52,7 @@
     "@keyv/sqlite": "^3.6.5",
     "@tsed/logger": "^6.5.0",
     "crypto-js": "^4.1.1",
-    "env-var": "^7.3.0",
+    "env-var": "^7.3.1",
     "keyv": "^4.5.2",
     "matrix-bot-sdk": "^0.6.5",
     "megalodon": "^5.5.0",
