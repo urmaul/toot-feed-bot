@@ -1,5 +1,5 @@
 // Social network system
-export type SNS = 'pleroma' | 'mastodon' | 'misskey';
+export type SNS = 'pleroma' | 'mastodon' | 'misskey' | 'friendica';
 
 export interface InstanceRef {
     sns: SNS;
