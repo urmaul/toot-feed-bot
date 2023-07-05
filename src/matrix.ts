@@ -14,6 +14,7 @@ export interface MatrixConfig {
     serverUrl: string;
     // see https://t2bot.io/docs/access_tokens
     accessToken: string;
+    cryptoDisabled: boolean;
     fsStoragePath: string;
     cryptoStorageDir: string;
 }
@@ -120,7 +121,7 @@ export async function initMatrixBot(config: MatrixConfig): Promise<MatrixBot> {
 	// time it restarts, so we need to prepare a storage provider. Here we use
 	// a simple JSON database.
 	const storage = new SimpleFsStorageProvider(config.fsStoragePath);
-	const crypto = new RustSdkCryptoStorageProvider(config.cryptoStorageDir);
+	const crypto = config.cryptoDisabled ? undefined : new RustSdkCryptoStorageProvider(config.cryptoStorageDir);
 
 	// Now we can create the client and set it up to automatically join rooms.
 	const matrix = new MatrixClient(config.serverUrl, config.accessToken, storage, crypto);
