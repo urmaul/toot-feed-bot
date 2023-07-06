@@ -265,7 +265,7 @@ async function run() {
 				logger.info(`Stream closed on ${subscription.roomId.value}`)
 				stopOngoingStream(subscription.roomId);
 			});
-			stream.on('parser-error', (err: Error) => logger.warn(`Stream parser error on ${subscription.roomId.value}`, err));
+			stream.on('parser-error', (err: Error) => logger.warn(`Stream parser error on ${subscription.roomId.value}`, err.message));
 
 			await reloadStatuses();
 			await reloadNotifications();
