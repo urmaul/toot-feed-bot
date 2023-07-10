@@ -214,12 +214,16 @@ async function run() {
 			}
 
 			const reloadStatuses = async () => {
-				const since_id = await store.maxStatusIds.get(subscription.roomId);
-				const response = await subscriptionCient.getHomeTimeline({ since_id });
+				try {
+					const since_id = await store.maxStatusIds.get(subscription.roomId);
+					const response = await subscriptionCient.getHomeTimeline({ since_id });
 
-				logger.debug(`${subscription.roomId.value}: Loaded ${response.data.length} statuses`);
+					logger.debug(`${subscription.roomId.value}: Loaded ${response.data.length} statuses`);
 
-				await handleStatuses(response.data);
+					await handleStatuses(response.data);
+				} catch (error) {
+					logger.error(`${subscription.roomId.value}: Error during reloading statuses:`, (error as any).message ?? error);
+				}
 			};
 
 			const handleNotifications = async (notifications: Entity.Notification[]) => {
@@ -242,30 +246,39 @@ async function run() {
 			}
 
 			const reloadNotifications = async () => {
-				const since_id = await store.maxNotificationIds.get(subscription.roomId);
-				const response = await subscriptionCient.getNotifications({ since_id });
+				try {
+					const since_id = await store.maxNotificationIds.get(subscription.roomId);
+					const response = await subscriptionCient.getNotifications({ since_id });
 
-				logger.debug(`${subscription.roomId.value}: Loaded ${response.data.length} notifications`);
+					logger.debug(`${subscription.roomId.value}: Loaded ${response.data.length} notifications`);
 
-				await handleNotifications(response.data);
+					await handleNotifications(response.data);
+				} catch (error) {
+					logger.error(`${subscription.roomId.value}: Error during reloading notifications:`, (error as any).message ?? error);
+				}
 			};
 
-			const stream = initStreamingClient(subscription.instanceRef, subscription.accessToken);
-			ongoing.set(subscription.roomId.value, stream);
+			try {
+				const stream = initStreamingClient(subscription.instanceRef, subscription.accessToken);
+				ongoing.set(subscription.roomId.value, stream);
 
-			stream.on('connect', () => logger.debug(`Stream connected on ${subscription.roomId.value}`));
-			stream.on('update', (status: Entity.Status) => handleStatuses([status]));
-			stream.on('notification', (notification: Entity.Notification) => handleNotifications([notification]));
-			stream.on('error', (err: Error) => {
-				logger.error(`Stream error on ${subscription.roomId.value}`, err);
-				stopOngoingStream(subscription.roomId);
-			});
-			stream.on('heartbeat', () => logger.debug(`Heartbeat on ${subscription.roomId.value}`));
-			stream.on('close', () => {
-				logger.info(`Stream closed on ${subscription.roomId.value}`)
-				stopOngoingStream(subscription.roomId);
-			});
-			stream.on('parser-error', (err: Error) => logger.warn(`Stream parser error on ${subscription.roomId.value}`, err.message));
+				stream.on('connect', () => logger.debug(`Stream connected on ${subscription.roomId.value}`));
+				stream.on('update', (status: Entity.Status) => handleStatuses([status]));
+				stream.on('notification', (notification: Entity.Notification) => handleNotifications([notification]));
+				stream.on('error', (err: Error) => {
+					logger.error(`Stream error on ${subscription.roomId.value}`, err);
+					stopOngoingStream(subscription.roomId);
+				});
+				stream.on('heartbeat', () => logger.debug(`Heartbeat on ${subscription.roomId.value}`));
+				stream.on('close', () => {
+					logger.info(`Stream closed on ${subscription.roomId.value}`)
+					stopOngoingStream(subscription.roomId);
+				});
+				stream.on('parser-error', (err: Error) => logger.warn(`Stream parser error on ${subscription.roomId.value}`, err.message));
+			} catch (error) {
+				logger.error(`${subscription.roomId.value}: Error during streaming client initialization`, (error as any).message ?? error);
+				ongoing.delete(subscription.roomId.value);
+			}
 
 			await reloadStatuses();
 			await reloadNotifications();
