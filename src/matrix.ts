@@ -4,10 +4,12 @@ import {
 	AutojoinRoomsMixin,
 	RichReply,
 	RustSdkCryptoStorageProvider,
+	LogService,
 } from 'matrix-bot-sdk';
 import { logger } from './logger';
 import { renderNotification, renderStatus } from './render';
 import { newRoomId, RoomId } from './types';
+import { MatrixLogger } from './matrix-logger';
 
 
 export interface MatrixConfig {
@@ -117,6 +119,8 @@ export class MatrixBot {
 }
 
 export async function initMatrixBot(config: MatrixConfig): Promise<MatrixBot> {
+	LogService.setLogger(new MatrixLogger());
+
 	// We'll want to make sure the bot doesn't have to do an initial sync every
 	// time it restarts, so we need to prepare a storage provider. Here we use
 	// a simple JSON database.
