@@ -1,20 +1,20 @@
 import { ILogger } from "matrix-bot-sdk";
-import { logger } from './logger';
+import { logger, moduled } from './logger';
 
 export class MatrixLogger implements ILogger {
     info(module: string, ...messageOrObject: any[]) {
-        logger.info(...messageOrObject, module);
+        moduled(`Matrix/${module}`, () => logger.info(...messageOrObject, module));
     }
     warn(module: string, ...messageOrObject: any[]) {
-        logger.warn(...messageOrObject, module);
+        moduled(`Matrix/${module}`, () => logger.warn(...messageOrObject, module));
     }
     error(module: string, ...messageOrObject: any[]) {
-        logger.error(...messageOrObject, module);
+        moduled(`Matrix/${module}`, () => logger.error(...messageOrObject));
     }
     debug(module: string, ...messageOrObject: any[]) {
-        logger.debug(...messageOrObject, module);
+        moduled(`Matrix/${module}`, () => logger.debug(...messageOrObject, module));
     }
     trace(module: string, ...messageOrObject: any[]) {
-        logger.trace(...messageOrObject, module);
+        moduled(`Matrix/${module}`, () => logger.trace(...messageOrObject, module));
     }
 }
