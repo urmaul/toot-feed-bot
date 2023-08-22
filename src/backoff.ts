@@ -1,8 +1,13 @@
+import { logger, moduled } from "./logger";
 import { InstanceRef } from "./types";
 
 export interface BackoffConfig {
     // Backoff interval in seconds
     cirquitBreakerInterval: number,
+}
+
+function stringify(instanceRef: InstanceRef): string {
+    return `${instanceRef.sns}/${instanceRef.hostname}`;
 }
 
 export class CirquitBreaker {
@@ -12,7 +17,6 @@ export class CirquitBreaker {
     private readonly interval: number;
 
     constructor(interval: number) {
-        const now = Date.now()
         this.interval = interval;
     }
 
@@ -33,29 +37,31 @@ export class CirquitBreaker {
 
 export class Backoff {
     readonly config: BackoffConfig;
-    cirquitBreakers: Map<InstanceRef, CirquitBreaker>;
+    cirquitBreakers: Map<string, CirquitBreaker>;
 
     constructor(config: BackoffConfig) {
         this.config = config;
         this.cirquitBreakers = new Map();
     }
 
-    isClosed(instanceRef: InstanceRef): boolean {
-        return this.getBreaker(instanceRef).isClosed();
+    instanceBlocked(instanceRef: InstanceRef): boolean {
+        return !this.getBreaker(instanceRef).isClosed();
     }
 
-    open(instanceRef: InstanceRef) {
+    blockInstance(instanceRef: InstanceRef) {
+        moduled('Backoff', () => logger.info(`Blocking instance ${stringify(instanceRef)}`));
         return this.getBreaker(instanceRef).open();
     }
 
     getBreaker(instanceRef: InstanceRef): CirquitBreaker {
-        const existingBreaker = this.cirquitBreakers.get(instanceRef)
+        const key = stringify(instanceRef);
+        const existingBreaker = this.cirquitBreakers.get(key)
         if (existingBreaker !== undefined) {
             return existingBreaker;
         }
 
         const newBreaker = new CirquitBreaker(this.config.cirquitBreakerInterval);
-        this.cirquitBreakers.set(instanceRef, newBreaker)
+        this.cirquitBreakers.set(key, newBreaker)
         
         return newBreaker;
     }
