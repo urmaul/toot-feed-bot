@@ -29,7 +29,7 @@ export default () => {
         },
         backoff: {
             // Cirquit breaker interval in seconds
-            cirquitBreakerInterval: env.get('CIRQUIT_BREAKER_INTERVAL_SECONDS').default(30 * 60 * 60).asIntPositive(),
+            cirquitBreakerInterval: env.get('CIRQUIT_BREAKER_INTERVAL_SECONDS').default(30 * 60).asIntPositive(),
         }
     };
     
