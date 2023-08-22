@@ -5,10 +5,12 @@ import { Entity } from 'megalodon';
 const typeIcons = {'image': '🖼', 'video': '🎞️', 'gifv': '🎞️'};
 
 export function renderStatus(status: Entity.Status, titleTemplate: string = '{}'): string {
+    const statusUrl: string = status.url !== null ? status.url : (status.reblog?.url ? status.reblog.url : status.uri);
+
     let name = `<b>${accountName(status.account)}` + (status.reblog ? ` ♻️ ${accountName(status.reblog.account)}` : '') + `</b>`;
     let title = summary(
         titleTemplate.replace('{}', name),
-        `<p>🆔 <code>${status.id}</code><br>🔗 ${unlink(status.uri)}</p>` +
+        `<p>🆔 <code>${status.id}</code><br>🔗 ${unlink(statusUrl)}</p>` +
         accountInfo(status.account) +
         (status.reblog ? accountInfo(status.reblog.account) : '')
     );
