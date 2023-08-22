@@ -258,6 +258,9 @@ async function run() {
 				}
 			};
 
+			await reloadStatuses();
+			await reloadNotifications();
+
 			try {
 				const stream = initStreamingClient(subscription.instanceRef, subscription.accessToken);
 				ongoing.set(subscription.roomId.value, stream);
@@ -279,9 +282,6 @@ async function run() {
 				logger.error(`${subscription.roomId.value}: Error during streaming client initialization`, (error as any).message ?? error);
 				ongoing.delete(subscription.roomId.value);
 			}
-
-			await reloadStatuses();
-			await reloadNotifications();
 		}
 	}
 
