@@ -2,7 +2,7 @@ import { logger } from './logger';
 import { parse } from 'node-html-parser';
 import { Entity } from 'megalodon';
 
-const typeIcons = {'image': '🖼', 'video': '🎞️'};
+const typeIcons = {'image': '🖼', 'video': '🎞️', 'gifv': '🎞️'};
 
 export function renderStatus(status: Entity.Status, titleTemplate: string = '{}'): string {
     let name = `<b>${accountName(status.account)}` + (status.reblog ? ` ♻️ ${accountName(status.reblog.account)}` : '') + `</b>`;
