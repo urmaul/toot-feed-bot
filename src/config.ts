@@ -8,7 +8,7 @@ export default () => {
             name: env.get('APP_NAME').default('TootFeedBot').asString(),
             dataDir,
             // Number of seconds between refresh requests
-            interval: env.get('APP_INTERVAL_SECONDS').default(5 * 60).asIntPositive(),
+            interval: env.get('APP_INTERVAL_SECONDS').default(15 * 60).asIntPositive(),
         },
         store: {
             // Connection line for the Keyv store
@@ -27,6 +27,10 @@ export default () => {
             fsStoragePath: `${dataDir}/matrix-bot.json`,
             cryptoStorageDir: `${dataDir}/matrix-bot-sled`,
         },
+        backoff: {
+            // Cirquit breaker interval in seconds
+            cirquitBreakerInterval: env.get('CIRQUIT_BREAKER_INTERVAL_SECONDS').default(30 * 60 * 60).asIntPositive(),
+        }
     };
     
     // Cleanup process.env for security

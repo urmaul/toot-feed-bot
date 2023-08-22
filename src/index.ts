@@ -7,11 +7,13 @@ import loadConfigs from './config';
 import { MegalodonInterface, WebSocketInterface } from 'megalodon';
 import { Store } from './store';
 import { RoomId } from './types';
+import { Backoff } from './backoff';
 
 const configs = loadConfigs();
 
 async function run() {
 	const store = new Store(configs.store);
+    const backoff = new Backoff(configs.backoff);
 	let ongoing: Map<string, WebSocketInterface> = new Map();
 
 	// ----- Helper functions
@@ -215,12 +217,14 @@ async function run() {
 
 			const reloadStatuses = async () => {
 				try {
-					const since_id = await store.maxStatusIds.get(subscription.roomId);
-					const response = await subscriptionCient.getHomeTimeline({ since_id });
+                    await backoff.execute(subscription.instanceRef, async () => {
+                        const since_id = await store.maxStatusIds.get(subscription.roomId);
+                        const response = await subscriptionCient.getHomeTimeline({ since_id });
 
-					logger.debug(`${subscription.roomId.value}: Loaded ${response.data.length} statuses`);
+                        logger.debug(`${subscription.roomId.value}: Loaded ${response.data.length} statuses`);
 
-					await handleStatuses(response.data);
+                        await handleStatuses(response.data);
+                    });
 				} catch (error) {
 					logger.error(`${subscription.roomId.value}: Error during reloading statuses:`, (error as any).message ?? error);
 				}
@@ -247,18 +251,23 @@ async function run() {
 
 			const reloadNotifications = async () => {
 				try {
-					const since_id = await store.maxNotificationIds.get(subscription.roomId);
-					const response = await subscriptionCient.getNotifications({ since_id });
+                    await backoff.execute(subscription.instanceRef, async () => {
+                        const since_id = await store.maxNotificationIds.get(subscription.roomId);
+                        const response = await subscriptionCient.getNotifications({ since_id });
 
-					logger.debug(`${subscription.roomId.value}: Loaded ${response.data.length} notifications`);
+                        logger.debug(`${subscription.roomId.value}: Loaded ${response.data.length} notifications`);
 
-					await handleNotifications(response.data);
+                        await handleNotifications(response.data);
+                    });
 				} catch (error) {
 					logger.error(`${subscription.roomId.value}: Error during reloading notifications:`, (error as any).message ?? error);
 				}
 			};
 
+			const startStreamingClient = () => {};
+
 			try {
+                // await backoff.execute(subscription.instanceRef, () => {
 				const stream = initStreamingClient(subscription.instanceRef, subscription.accessToken);
 				ongoing.set(subscription.roomId.value, stream);
 
