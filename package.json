@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@keyv/sqlite": "^3.6.6",
-    "@tsed/logger": "^6.6.2",
+    "@tsed/logger": "^6.6.3",
     "crypto-js": "^4.1.1",
     "env-var": "^7.4.1",
     "keyv": "^4.5.3",
