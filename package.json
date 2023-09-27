@@ -54,7 +54,7 @@
     "env-var": "^7.4.1",
     "keyv": "^4.5.3",
     "matrix-bot-sdk": "^0.6.6",
-    "megalodon": "^6.2.0",
+    "megalodon": "^8.1.0",
     "node-html-parser": "^6.1.9"
   }
 }
