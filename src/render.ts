@@ -64,7 +64,7 @@ export function accountInfo(account: Entity.Account): string {
     const link = unlink(account.url);
     const noteText = unlink(noteHtml.structuredText);
 
-    return `<p>👤 <b>${accountName(account)}</b> ${link}${noteText && '<br>'}${noteText}</p>`;
+    return `<p>👤 <b>${accountName(account)}</b> <code>@${account.acct}</code> ${link}${noteText && '<br>'}${noteText}</p>`;
 }
 
 function renderMediaAttachment(media: Entity.Attachment): string {
@@ -113,6 +113,18 @@ export function renderNotification(notification: Entity.Notification): string | 
             accountInfo(notification.account) +
             '<p>💬 ' + (notification.status.plain_content || unlinkMentions(notification.status.content)) + '</p>'
         );
+    } else if (notification.type == 'reblog' && notification.account && notification.status) {
+        return summary(
+            `🔔♻️ <b>${notification.account.display_name}</b> reblogged your toot from ${notification.status.created_at}`,
+            `<p>🔗 ${unlink(notification.status.uri)}</p>` +
+            accountInfo(notification.account) +
+            '<p>💬 ' + (notification.status.plain_content || unlinkMentions(notification.status.content)) + '</p>'
+        );
+    } else if (notification.type == 'move' && notification.account && notification.target) {
+        return summary(
+            `🔔💨 <b>${notification.account.display_name}</b> moved to <code>@${notification.target.acct}</code>`,
+            accountInfo(notification.account)
+        ) + accountInfo(notification.target);
     } else {
         logger.debug(`Unknown notification type ${notification.type}`, notification);
         return undefined;
