@@ -9,6 +9,8 @@ export default () => {
             dataDir,
             // Number of seconds between refresh requests
             interval: env.get('APP_INTERVAL_SECONDS').default(15 * 60).asIntPositive(),
+            // Block streaming on specific SNS
+            blockStreamingOn: env.get('APP_BLOCK_STREAMING_ON_SNS').asArray() || [],
         },
         store: {
             // Connection line for the Keyv store

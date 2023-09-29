@@ -298,7 +298,10 @@ async function run() {
 			if (!backoff.instanceBlocked(subscription.instanceRef)) {
 				await reloadNotifications();
 			}
-			if (!backoff.instanceBlocked(subscription.instanceRef)) {
+
+			// If streaming blocked by config
+			const streamingBlocked = configs.app.blockStreamingOn.includes(subscription.instanceRef.sns);
+			if (!backoff.instanceBlocked(subscription.instanceRef) && !streamingBlocked) {
 				startStreamingClient();
 			}
 		}
