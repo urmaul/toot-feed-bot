@@ -123,8 +123,9 @@ export function renderNotification(notification: Entity.Notification): string | 
     } else if (notification.type == 'move' && notification.account && notification.target) {
         return summary(
             `🔔💨 <b>${notification.account.display_name}</b> moved to <code>@${notification.target.acct}</code>`,
-            accountInfo(notification.account)
-        ) + accountInfo(notification.target);
+            accountInfo(notification.account) +
+            accountInfo(notification.target)
+        );
     } else {
         logger.debug(`Unknown notification type ${notification.type}`, notification);
         return undefined;
