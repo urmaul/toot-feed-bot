@@ -66,6 +66,17 @@ describe('render', () => {
     describe('renderNotification', () => {
         const summaryOf = (str: string) => [...str?.matchAll(/.*\<summary\>(.*)\<\/summary\>.*/g)!][0][1];
 
+        it('renders "reblog" notifications', () => {
+            const notification: Entity.Notification = {
+                ...fixtures.emptyNotification,
+                type: 'reblog',
+                status: fixtures.status,
+            }
+            const expected = '🔔♻️ <b>John Mastodon</b> reblogged your toot from 2022-11-30T09:26:01.000Z';
+            const actual = renderNotification(notification)!;
+            expect(summaryOf(actual)).to.equal(expected);
+        });
+
         it('renders "move" notifications', () => {
             const notification: Entity.Notification = {
                 ...fixtures.emptyNotification,
