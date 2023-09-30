@@ -27,3 +27,13 @@ export const account: Entity.Account = {
     fields: [],
     bot: false,
 };
+
+export const emptyNotification: Entity.Notification = {
+    account: account,
+    created_at: '',
+    id: '',
+    type: '',
+    status: undefined,
+    emoji: undefined,
+    target: undefined
+}

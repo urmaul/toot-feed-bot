@@ -1,8 +1,9 @@
 'use strict';
 
 import { expect } from 'chai';
-import { accountInfo, renderPoll, unlinkMentions } from '../src/render';
+import { accountInfo, renderNotification, renderPoll, unlinkMentions } from '../src/render';
 import * as fixtures from './fixtures';
+import { Entity } from 'megalodon';
 
 describe('render', () => {
     describe('unlinkMentions', () => {
@@ -45,22 +46,38 @@ describe('render', () => {
     });
 
     describe('accountInfo', () => {
-        const account = fixtures.account;
-
         it('renders a normal account with links in note', () => {
-            const actual = accountInfo(account);
+            const actual = accountInfo(fixtures.account);
             const expected = '<p>👤 <b>John Mastodon</b> <code>@john@mastodon.test</code> mastodon.test/@john<br>John Mastodon, a mammal\nmastodon.test/@john\njohnmastodon.test/</p>';
             expect(actual).to.equal(expected);
         });
 
         it('renders an account with empty display_name and note', () => {
             const actual = accountInfo({
-                ...account,
+                ...fixtures.account,
                 display_name: '',
                 note: '',
             });
             const expected = '<p>👤 <b>john</b> <code>@john@mastodon.test</code> mastodon.test/@john</p>';
             expect(actual).to.equal(expected);
+        });
+    });
+
+    describe('renderNotification', () => {
+        const summaryOf = (str: string) => [...str?.matchAll(/.*\<summary\>(.*)\<\/summary\>.*/g)!][0][1];
+
+        it('renders "move" notifications', () => {
+            const notification: Entity.Notification = {
+                ...fixtures.emptyNotification,
+                type: 'move',
+                target: {
+                    ...fixtures.account,
+                    acct: 'john@mastodonna.test',
+                }
+            }
+            const expected = '🔔💨 <b>John Mastodon</b> moved to <code>@john@mastodonna.test</code>';
+            const actual = renderNotification(notification)!;
+            expect(summaryOf(actual)).to.equal(expected);
         });
     });
 });
