@@ -55,6 +55,10 @@ function unlink(text: string): string {
     return text.replace(/\bhttps?:\/\//g, '');
 }
 
+function accountId(account: Entity.Account): string {
+    return `<code>@${account.acct}</code>`;
+}
+
 function accountName(account: Entity.Account): string {
     return account.display_name || account.username;
 }
@@ -64,7 +68,7 @@ export function accountInfo(account: Entity.Account): string {
     const link = unlink(account.url);
     const noteText = unlink(noteHtml.structuredText);
 
-    return `<p>👤 <b>${accountName(account)}</b> <code>@${account.acct}</code> ${link}${noteText && '<br>'}${noteText}</p>`;
+    return `<p>👤 <b>${accountName(account)}</b> ${accountId(account)} ${link}${noteText && '<br>'}${noteText}</p>`;
 }
 
 function renderMediaAttachment(media: Entity.Attachment): string {
@@ -122,7 +126,7 @@ export function renderNotification(notification: Entity.Notification): string | 
         );
     } else if (notification.type == 'move' && notification.account && notification.target) {
         return summary(
-            `🔔💨 <b>${notification.account.display_name}</b> moved to <code>@${notification.target.acct}</code>`,
+            `🔔💨 <b>${notification.account.display_name}</b> moved to ${accountId(notification.target)}`,
             accountInfo(notification.account) +
             accountInfo(notification.target)
         );
