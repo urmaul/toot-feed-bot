@@ -4,33 +4,33 @@ import { Entity } from 'megalodon';
 
 const typeIcons = {'image': '🖼', 'video': '🎞️', 'gifv': '🎞️'};
 
-export function renderStatus(status: Entity.Status, titleTemplate: string = '{}'): string {
+export function renderStatus(status: Entity.Status, titleTemplate = '{}'): string {
     const statusUrl: string = status.url !== null ? status.url : (status.reblog?.url ? status.reblog.url : status.uri);
 
-    let name = `<b>${accountName(status.account)}` + (status.reblog ? ` ♻️ ${accountName(status.reblog.account)}` : '') + `</b>`;
-    let title = summary(
+    const name = `<b>${accountName(status.account)}` + (status.reblog ? ` ♻️ ${accountName(status.reblog.account)}` : '') + '</b>';
+    const title = summary(
         titleTemplate.replace('{}', name),
         `<p>🆔 <code>${status.id}</code><br>🔗 ${unlink(statusUrl)}</p>` +
         accountInfo(status.account) +
         (status.reblog ? accountInfo(status.reblog.account) : '')
     );
 
-    let content = status.reblog ? renderStatusContent(status.reblog) : renderStatusContent(status);
+    const content = status.reblog ? renderStatusContent(status.reblog) : renderStatusContent(status);
 
     return title + content;
 }
 
 function renderStatusContent(status: Entity.Status): string {
-    let content = unlinkMentions(status.content);
+    const content = unlinkMentions(status.content);
 
-    let blocks: string[] = [];
+    const blocks: string[] = [];
 
     if (status.media_attachments.length > 0) {
         blocks.push(
-            `<details>` +
-            `<summary>${status.media_attachments.map(mediaIcon).join(" ")}</summary>` +
-            `<p>` + status.media_attachments.map(renderMediaAttachment).join("<br>") + `</p>` +
-            `</details>`
+            '<details>' +
+            `<summary>${status.media_attachments.map(mediaIcon).join(' ')}</summary>` +
+            '<p>' + status.media_attachments.map(renderMediaAttachment).join('<br>') + '</p>' +
+            '</details>'
         );
     }
     
@@ -39,7 +39,7 @@ function renderStatusContent(status: Entity.Status): string {
         blocks.push(renderPoll(poll));
     }
     
-	return content + blocks.join('<br>');
+    return content + blocks.join('<br>');
 }
 
 export function unlinkMentions(content: string): string {
@@ -55,6 +55,10 @@ function unlink(text: string): string {
     return text.replace(/\bhttps?:\/\//g, '');
 }
 
+function accountId(account: Entity.Account): string {
+    return `<code>@${account.acct}</code>`;
+}
+
 function accountName(account: Entity.Account): string {
     return account.display_name || account.username;
 }
@@ -64,7 +68,7 @@ export function accountInfo(account: Entity.Account): string {
     const link = unlink(account.url);
     const noteText = unlink(noteHtml.structuredText);
 
-    return `<p>👤 <b>${accountName(account)}</b> ${link}${noteText && '<br>'}${noteText}</p>`;
+    return `<p>👤 <b>${accountName(account)}</b> ${accountId(account)} ${link}${noteText && '<br>'}${noteText}</p>`;
 }
 
 function renderMediaAttachment(media: Entity.Attachment): string {
@@ -112,6 +116,19 @@ export function renderNotification(notification: Entity.Notification): string | 
             `<p>🔗 ${unlink(notification.status.uri)}</p>` +
             accountInfo(notification.account) +
             '<p>💬 ' + (notification.status.plain_content || unlinkMentions(notification.status.content)) + '</p>'
+        );
+    } else if (notification.type == 'reblog' && notification.account && notification.status) {
+        return summary(
+            `🔔♻️ <b>${notification.account.display_name}</b> reblogged your toot from ${notification.status.created_at}`,
+            `<p>🔗 ${unlink(notification.status.uri)}</p>` +
+            accountInfo(notification.account) +
+            '<p>💬 ' + (notification.status.plain_content || unlinkMentions(notification.status.content)) + '</p>'
+        );
+    } else if (notification.type == 'move' && notification.account && notification.target) {
+        return summary(
+            `🔔💨 <b>${notification.account.display_name}</b> moved to ${accountId(notification.target)}`,
+            accountInfo(notification.account) +
+            accountInfo(notification.target)
         );
     } else {
         logger.debug(`Unknown notification type ${notification.type}`, notification);

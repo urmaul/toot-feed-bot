@@ -1,7 +1,9 @@
 'use strict';
 
 import { expect } from 'chai';
-import { accountInfo, renderPoll, unlinkMentions } from '../src/render';
+import { accountInfo, renderNotification, renderPoll, unlinkMentions } from '../src/render';
+import * as fixtures from './fixtures';
+import { Entity } from 'megalodon';
 
 describe('render', () => {
     describe('unlinkMentions', () => {
@@ -44,46 +46,49 @@ describe('render', () => {
     });
 
     describe('accountInfo', () => {
-        const account: Entity.Account = {
-            id: 'AAA',
-            username: 'john',
-            acct: 'john@mastodon.test',
-            display_name: 'John Mastodon',
-            locked: false,
-            group: null,
-            noindex: false,
-            suspended: false,
-            limited: false,
-            created_at: '2022-11-30T09:25:01.000Z',
-            followers_count: 0,
-            following_count: 0,
-            statuses_count: 1,
-            note: '<p>John Mastodon, a mammal<br/><a href="https://mastodon.test/@john"><span>https://</span><span>mastodon.test/@john</span><span></span></a><br/><a href="https://johnmastodon.test/">https://johnmastodon.test/</a></p>',
-            url: 'https://mastodon.test/@john',
-            avatar: '',
-            avatar_static: '',
-            header: '',
-            header_static: '',
-            emojis: [],
-            moved: null,
-            fields: [],
-            bot: false,
-        };
-
         it('renders a normal account with links in note', () => {
-            const actual = accountInfo(account);
-            const expected = '<p>👤 <b>John Mastodon</b> mastodon.test/@john<br>John Mastodon, a mammal\nmastodon.test/@john\njohnmastodon.test/</p>';
+            const actual = accountInfo(fixtures.account);
+            const expected = '<p>👤 <b>John Mastodon</b> <code>@john@mastodon.test</code> mastodon.test/@john<br>John Mastodon, a mammal\nmastodon.test/@john\njohnmastodon.test/</p>';
             expect(actual).to.equal(expected);
         });
 
         it('renders an account with empty display_name and note', () => {
             const actual = accountInfo({
-                ...account,
+                ...fixtures.account,
                 display_name: '',
                 note: '',
             });
-            const expected = '<p>👤 <b>john</b> mastodon.test/@john</p>';
+            const expected = '<p>👤 <b>john</b> <code>@john@mastodon.test</code> mastodon.test/@john</p>';
             expect(actual).to.equal(expected);
+        });
+    });
+
+    describe('renderNotification', () => {
+        const summaryOf = (str: string) => [...str?.matchAll(/.*<summary>(.*)<\/summary>.*/g)!][0][1];
+
+        it('renders "reblog" notifications', () => {
+            const notification: Entity.Notification = {
+                ...fixtures.emptyNotification,
+                type: 'reblog',
+                status: fixtures.status,
+            }
+            const expected = '🔔♻️ <b>John Mastodon</b> reblogged your toot from 2022-11-30T09:26:01.000Z';
+            const actual = renderNotification(notification)!;
+            expect(summaryOf(actual)).to.equal(expected);
+        });
+
+        it('renders "move" notifications', () => {
+            const notification: Entity.Notification = {
+                ...fixtures.emptyNotification,
+                type: 'move',
+                target: {
+                    ...fixtures.account,
+                    acct: 'john@mastodonna.test',
+                }
+            }
+            const expected = '🔔💨 <b>John Mastodon</b> moved to <code>@john@mastodonna.test</code>';
+            const actual = renderNotification(notification)!;
+            expect(summaryOf(actual)).to.equal(expected);
         });
     });
 });

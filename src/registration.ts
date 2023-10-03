@@ -1,4 +1,4 @@
-import { InstanceRef, RoomId } from "./types";
+import { InstanceRef, RoomId } from './types';
 
 export interface OngoingRegistration {
     // Matrix room id

@@ -13,20 +13,20 @@ export interface SourceClient<Client extends MegalodonInterface> {
 }
 
 export function initFediverseClient(config: FediverseConfig): SourceClient<MegalodonInterface> {
-	const client = generator(config.ref.sns, `https://${config.ref.hostname}`);
-	return { client, config };
+    const client = generator(config.ref.sns, `https://${config.ref.hostname}`);
+    return { client, config };
 }
 
 export function isMastodon(client: SourceClient<MegalodonInterface>): client is SourceClient<Mastodon> {
-    return client.config.ref.sns == "mastodon";
+    return client.config.ref.sns == 'mastodon';
 }
 
 export function isPleroma(client: SourceClient<MegalodonInterface>): client is SourceClient<Pleroma> {
-    return client.config.ref.sns == "pleroma";
+    return client.config.ref.sns == 'pleroma';
 }
 
 export function initSubscriptionClient(config: InstanceRef, accessToken: string): MegalodonInterface {
-	return generator(config.sns, `https://${config.hostname}`, accessToken);
+    return generator(config.sns, `https://${config.hostname}`, accessToken);
 }
 
 export function initStreamingClient(config: InstanceRef, accessToken: string): WebSocketInterface {

@@ -103,7 +103,7 @@ export class Store {
     }
 
     async getAllSubscriptions(): Promise<Subscription[]> {
-        let subscriptions: Subscription[] = [];
+        const subscriptions: Subscription[] = [];
         for await (const [_, subscription] of this.subscriptions.iterator()) {
             subscriptions.push(subscription);
         }

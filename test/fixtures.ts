@@ -1,0 +1,73 @@
+'use strict';
+
+import { Entity } from 'megalodon';
+
+export const account: Entity.Account = {
+    id: 'AAA',
+    username: 'john',
+    acct: 'john@mastodon.test',
+    display_name: 'John Mastodon',
+    locked: false,
+    group: null,
+    noindex: false,
+    suspended: false,
+    limited: false,
+    created_at: '2022-11-30T09:25:01.000Z',
+    followers_count: 0,
+    following_count: 0,
+    statuses_count: 1,
+    note: '<p>John Mastodon, a mammal<br/><a href="https://mastodon.test/@john"><span>https://</span><span>mastodon.test/@john</span><span></span></a><br/><a href="https://johnmastodon.test/">https://johnmastodon.test/</a></p>',
+    url: 'https://mastodon.test/@john',
+    avatar: '',
+    avatar_static: '',
+    header: '',
+    header_static: '',
+    emojis: [],
+    moved: null,
+    fields: [],
+    bot: false,
+};
+
+export const status: Entity.Status = {
+    id: '',
+    uri: '',
+    url: '',
+    account: account,
+    in_reply_to_id: null,
+    in_reply_to_account_id: null,
+    reblog: null,
+    content: '<p>Hello world</p>',
+    plain_content: 'Hello world',
+    created_at: '2022-11-30T09:26:01.000Z',
+    emojis: [],
+    replies_count: 0,
+    reblogs_count: 0,
+    favourites_count: 0,
+    reblogged: false,
+    favourited: false,
+    muted: false,
+    sensitive: false,
+    spoiler_text: '',
+    visibility: 'public',
+    media_attachments: [],
+    mentions: [],
+    tags: [],
+    card: null,
+    poll: null,
+    application: null,
+    language: null,
+    pinned: false,
+    emoji_reactions: [],
+    quote: false,
+    bookmarked: false,
+};
+
+export const emptyNotification: Entity.Notification = {
+    account: account,
+    created_at: '2022-11-30T09:27:01.000Z',
+    id: '',
+    type: '',
+    status: undefined,
+    emoji: undefined,
+    target: undefined
+}

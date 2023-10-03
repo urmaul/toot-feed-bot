@@ -1,4 +1,4 @@
-import { ILogger } from "matrix-bot-sdk";
+import { ILogger } from 'matrix-bot-sdk';
 import { logger, moduled } from './logger';
 
 export class MatrixLogger implements ILogger {

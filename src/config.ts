@@ -3,7 +3,7 @@ import env from 'env-var';
 export default () => {
     const dataDir = env.get('APP_DATA_DIR').default('./data').asString();
 
-    let configs = {
+    const configs = {
         app: {
             name: env.get('APP_NAME').default('TootFeedBot').asString(),
             dataDir,
