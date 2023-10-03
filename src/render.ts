@@ -4,33 +4,33 @@ import { Entity } from 'megalodon';
 
 const typeIcons = {'image': '🖼', 'video': '🎞️', 'gifv': '🎞️'};
 
-export function renderStatus(status: Entity.Status, titleTemplate: string = '{}'): string {
+export function renderStatus(status: Entity.Status, titleTemplate = '{}'): string {
     const statusUrl: string = status.url !== null ? status.url : (status.reblog?.url ? status.reblog.url : status.uri);
 
-    let name = `<b>${accountName(status.account)}` + (status.reblog ? ` ♻️ ${accountName(status.reblog.account)}` : '') + `</b>`;
-    let title = summary(
+    const name = `<b>${accountName(status.account)}` + (status.reblog ? ` ♻️ ${accountName(status.reblog.account)}` : '') + '</b>';
+    const title = summary(
         titleTemplate.replace('{}', name),
         `<p>🆔 <code>${status.id}</code><br>🔗 ${unlink(statusUrl)}</p>` +
         accountInfo(status.account) +
         (status.reblog ? accountInfo(status.reblog.account) : '')
     );
 
-    let content = status.reblog ? renderStatusContent(status.reblog) : renderStatusContent(status);
+    const content = status.reblog ? renderStatusContent(status.reblog) : renderStatusContent(status);
 
     return title + content;
 }
 
 function renderStatusContent(status: Entity.Status): string {
-    let content = unlinkMentions(status.content);
+    const content = unlinkMentions(status.content);
 
-    let blocks: string[] = [];
+    const blocks: string[] = [];
 
     if (status.media_attachments.length > 0) {
         blocks.push(
-            `<details>` +
-            `<summary>${status.media_attachments.map(mediaIcon).join(" ")}</summary>` +
-            `<p>` + status.media_attachments.map(renderMediaAttachment).join("<br>") + `</p>` +
-            `</details>`
+            '<details>' +
+            `<summary>${status.media_attachments.map(mediaIcon).join(' ')}</summary>` +
+            '<p>' + status.media_attachments.map(renderMediaAttachment).join('<br>') + '</p>' +
+            '</details>'
         );
     }
     
@@ -39,7 +39,7 @@ function renderStatusContent(status: Entity.Status): string {
         blocks.push(renderPoll(poll));
     }
     
-	return content + blocks.join('<br>');
+    return content + blocks.join('<br>');
 }
 
 export function unlinkMentions(content: string): string {

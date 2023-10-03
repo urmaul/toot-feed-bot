@@ -1,5 +1,5 @@
-import { logger, moduled } from "./logger";
-import { InstanceRef } from "./types";
+import { logger, moduled } from './logger';
+import { InstanceRef } from './types';
 
 export interface BackoffConfig {
     // Backoff interval in seconds
@@ -11,9 +11,9 @@ function stringify(instanceRef: InstanceRef): string {
 }
 
 export class CirquitBreaker {
-    private _isClosed: boolean = true;
+    private _isClosed = true;
     // The time when cirquit breaker closes
-    private closeAt: number = 0;
+    private closeAt = 0;
     private readonly interval: number;
 
     constructor(interval: number) {
