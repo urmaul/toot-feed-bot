@@ -10,5 +10,6 @@
 	"rules": {
 		"indent": ["error", 4],
 		"quotes": ["error", "single"]
-	}
+	},
+	"ignorePatterns": ["test/**/*.test.ts"]
 }

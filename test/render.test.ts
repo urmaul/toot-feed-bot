@@ -64,7 +64,7 @@ describe('render', () => {
     });
 
     describe('renderNotification', () => {
-        const summaryOf = (str: string) => [...str?.matchAll(/.*\<summary\>(.*)\<\/summary\>.*/g)!][0][1];
+        const summaryOf = (str: string) => [...str?.matchAll(/.*<summary>(.*)<\/summary>.*/g)!][0][1];
 
         it('renders "reblog" notifications', () => {
             const notification: Entity.Notification = {
