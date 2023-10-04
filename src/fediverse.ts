@@ -1,4 +1,4 @@
-import generator, { detector, Mastodon, MegalodonInterface, Pleroma, WebSocketInterface } from 'megalodon';
+import generator, { detector, Mastodon, MegalodonInterface, OAuth, Pleroma, WebSocketInterface } from 'megalodon';
 import { InstanceRef, SNS } from './types';
 
 export interface FediverseConfig {
@@ -46,13 +46,13 @@ export async function detectSNS(hostname: string): Promise<SNS> {
 export async function createFediverseApp(url: URL, botAppName: string): Promise<FediverseConfig> {
     const sns = await detectSNS(url.hostname);
     const regClient = generator(sns, `https://${url.hostname}`);
-    const appData = await regClient.createApp(botAppName, {
+    const appData: OAuth.AppData = await regClient.createApp(botAppName, {
         scopes: ['read'],
         redirect_uris: 'urn:ietf:wg:oauth:2.0:oob',
     });
     return {
         ref: { sns, hostname: url.hostname },
-        clientId: appData.clientId,
-        clientSecret: appData.clientSecret
+        clientId: appData.client_id,
+        clientSecret: appData.client_secret
     };
 }
