@@ -1,5 +1,6 @@
 import generator, { detector, Mastodon, MegalodonInterface, OAuth, Pleroma, WebSocketInterface } from 'megalodon';
 import { InstanceRef, SNS } from './types';
+import { extractFromError } from './error';
 
 export interface FediverseConfig {
     ref: InstanceRef;
@@ -55,4 +56,10 @@ export async function createFediverseApp(url: URL, botAppName: string): Promise<
         clientId: appData.client_id,
         clientSecret: appData.client_secret
     };
+}
+
+// Check if the error is an error response from the server.
+// If yes, return this error.
+export function extractResponseError(error: unknown): string|undefined {
+    return extractFromError(error, 'response', 'data', 'error');
 }
