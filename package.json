@@ -52,7 +52,7 @@
     "@tsed/logger": "^6.6.3",
     "crypto-js": "^4.1.1",
     "env-var": "^7.4.1",
-    "keyv": "^4.5.3",
+    "keyv": "^4.5.4",
     "matrix-bot-sdk": "^0.6.6",
     "megalodon": "^8.1.4",
     "node-html-parser": "^6.1.10"
