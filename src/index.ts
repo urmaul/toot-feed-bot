@@ -1,6 +1,6 @@
 'use strict';
 
-import { createFediverseApp, initFediverseClient, initStreamingClient, initSubscriptionClient, isMastodon, isPleroma, SourceClient } from './fediverse';
+import { createFediverseApp, extractResponseError, initFediverseClient, initStreamingClient, initSubscriptionClient, isMastodon, isPleroma, SourceClient } from './fediverse';
 import { initMatrixBot } from './matrix';
 import { logger } from './logger';
 import loadConfigs from './config';
@@ -8,6 +8,7 @@ import { MegalodonInterface, WebSocketInterface } from 'megalodon';
 import { Store } from './store';
 import { RoomId } from './types';
 import { Backoff } from './backoff';
+import { extractFromError } from './error';
 
 const configs = loadConfigs();
 
@@ -141,8 +142,7 @@ async function run() {
             return 'Subscription created succesfully';
 
         } catch (error) {
-            const responseError = (error as any).response.data.error;
-            return responseError ? `${responseError}` : `${error}`;
+            return extractResponseError(error) ?? `${error}`;
         }
     });
 
@@ -159,8 +159,7 @@ async function run() {
                 return undefined;
 
             } catch (error) {
-                const responseError = (error as any).response.data.error;
-                return responseError ? `${responseError}` : `${error}`;
+                return extractResponseError(error) ?? `${error}`;
             }
 
         } else {
@@ -228,7 +227,7 @@ async function run() {
 
                     await handleStatuses(response.data);
                 } catch (error) {
-                    logger.error(`${subscription.roomId.value}: Error during reloading statuses:`, (error as any).message ?? error);
+                    logger.error(`${subscription.roomId.value}: Error during reloading statuses:`, extractFromError(error, 'message') ?? error);
                     backoff.blockInstance(subscription.instanceRef);
                 }
             };
@@ -261,7 +260,7 @@ async function run() {
 
                     await handleNotifications(response.data);
                 } catch (error) {
-                    logger.error(`${subscription.roomId.value}: Error during reloading notifications:`, (error as any).message ?? error);
+                    logger.error(`${subscription.roomId.value}: Error during reloading notifications:`, extractFromError(error, 'message') ?? error);
                     backoff.blockInstance(subscription.instanceRef);
                 }
             };
@@ -286,7 +285,7 @@ async function run() {
                     });
                     stream.on('parser-error', (err: Error) => logger.warn(`Stream parser error on ${subscription.roomId.value}`, err.message));
                 } catch (error) {
-                    logger.error(`${subscription.roomId.value}: Error during streaming client initialization`, (error as any).message ?? error);
+                    logger.error(`${subscription.roomId.value}: Error during streaming client initialization`, extractFromError(error, 'message') ?? error);
                     ongoing.delete(subscription.roomId.value);
                 }
             };
