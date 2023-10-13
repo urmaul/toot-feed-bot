@@ -1,6 +1,9 @@
 import { ILogger } from 'matrix-bot-sdk';
 import { logger, moduled } from './logger';
 
+// Disabling "no-explicit-any" rule here because it's used in an external interface.
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export class MatrixLogger implements ILogger {
     info(module: string, ...messageOrObject: any[]) {
         moduled(`Matrix/${module}`, () => logger.info(...messageOrObject, module));
