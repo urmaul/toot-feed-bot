@@ -10,6 +10,7 @@ import { logger } from './logger';
 import { renderNotification, renderStatus } from './render';
 import { newRoomId, RoomId } from './types';
 import { MatrixLogger } from './matrix-logger';
+import { extractNumberFromError } from './error';
 
 
 export interface MatrixConfig {
@@ -40,7 +41,7 @@ export class MatrixBot {
         try {
             await f();
         } catch (error) {
-            const retryAfterMs = (error as any).retryAfterMs;
+            const retryAfterMs = extractNumberFromError(error, 'retryAfterMs');
             if (retryAfterMs) {
                 // If error tells us to retry => wait and retry
                 logger.debug(`Matrix backoff error. Waiting to retry after ${retryAfterMs}ms`);
