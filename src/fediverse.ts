@@ -61,5 +61,6 @@ export async function createFediverseApp(url: URL, botAppName: string): Promise<
 // Check if the error is an error response from the server.
 // If yes, return this error.
 export function extractResponseError(error: unknown): string|undefined {
-    return extractFromError(error, 'response', 'data', 'error');
+    const inner = extractFromError(error, 'response', 'data', 'error');
+    return inner !== undefined ? `${inner}` : undefined;
 }
