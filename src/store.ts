@@ -70,6 +70,9 @@ export class Store {
         return CryptoJS.SHA256(roomId.value).toString(CryptoJS.enc.Base64);
     }
 
+    // These functions wrap keyv intenal functions that work with "any".
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+
     private async tryGet(key: string): Promise<any | undefined> {
         try {
             return await this.keyv.get(key);
@@ -95,6 +98,7 @@ export class Store {
             logger.error(`Error while deleting ${key}`, error);
         }
     }
+    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     // -- Subscriptions --
 
@@ -104,9 +108,11 @@ export class Store {
 
     async getAllSubscriptions(): Promise<Subscription[]> {
         const subscriptions: Subscription[] = [];
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         for await (const [_, subscription] of this.subscriptions.iterator()) {
             subscriptions.push(subscription);
         }
+        /* eslint-enable @typescript-eslint/no-unused-vars */
         return subscriptions;
     }
 
