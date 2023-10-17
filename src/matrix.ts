@@ -36,7 +36,7 @@ export class MatrixBot {
     }
 
     /** Handles retryAfterMs error thrown within `f`. */
-    private async tryBackedOff(f: () => Promise<any>): Promise<void> {
+    private async tryBackedOff<A>(f: () => Promise<A>): Promise<void> {
         try {
             await f();
         } catch (error) {
@@ -64,7 +64,7 @@ export class MatrixBot {
         }
     }
 
-    private async sleep(ms) {
+    private async sleep(ms: number) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
@@ -109,7 +109,7 @@ export class MatrixBot {
     }
 
     onEvent(event: string, handler: EventHandler): void {
-        this.client.on(event, async (roomId: string, body: any) => {
+        this.client.on(event, async (roomId: string) => {
             const message = await handler(newRoomId(roomId));
             if (message) {
                 this.client.sendHtmlText(roomId, message);
