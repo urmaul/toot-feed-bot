@@ -11,6 +11,7 @@ import { renderNotification, renderStatus } from './render';
 import { newRoomId, RoomId } from './types';
 import { MatrixLogger } from './matrix-logger';
 import { extractNumberFromError } from './error';
+import { Entity } from 'megalodon';
 
 
 export interface MatrixConfig {

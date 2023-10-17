@@ -4,7 +4,7 @@ import { createFediverseApp, extractResponseError, initFediverseClient, initStre
 import { initMatrixBot } from './matrix';
 import { logger } from './logger';
 import loadConfigs from './config';
-import { MegalodonInterface, WebSocketInterface } from 'megalodon';
+import { MegalodonInterface, WebSocketInterface, Entity } from 'megalodon';
 import { Store } from './store';
 import { RoomId } from './types';
 import { Backoff } from './backoff';
