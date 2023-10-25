@@ -55,6 +55,6 @@
     "keyv": "^4.5.4",
     "matrix-bot-sdk": "^0.6.6",
     "megalodon": "^8.1.6",
-    "node-html-parser": "^6.1.10"
+    "node-html-parser": "^6.1.11"
   }
 }
