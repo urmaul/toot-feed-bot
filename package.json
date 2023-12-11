@@ -44,7 +44,7 @@
     "eslint": "^8.55.0",
     "mocha": "^10.2.0",
     "source-map-support": "^0.5.21",
-    "ts-node": "^10.0.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
   "dependencies": {
