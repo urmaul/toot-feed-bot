@@ -297,7 +297,7 @@ async function run() {
             if (!backoff.instanceBlocked(subscription.instanceRef)) {
                 await reloadNotifications();
             }
-            if (!backoff.instanceBlocked(subscription.instanceRef)) {
+            if (subscription.instanceRef.sns == 'mastodon' && !backoff.instanceBlocked(subscription.instanceRef)) {
                 startStreamingClient();
             }
         }
