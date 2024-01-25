@@ -40,7 +40,7 @@
     "@typescript-eslint/eslint-plugin": "^6.19.1",
     "@typescript-eslint/parser": "^6.19.1",
     "chai": "^4.3.10",
-    "dotenv": "^16.4.0",
+    "dotenv": "^16.4.1",
     "eslint": "^8.56.0",
     "mocha": "^10.2.0",
     "source-map-support": "^0.5.21",
