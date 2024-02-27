@@ -66,16 +66,20 @@ async function run() {
 
     const matrix = await initMatrixBot(configs.matrix);
 
-    matrix.onEvent('room.join', () => Promise.resolve(`
-		<p>Hello! I am ${configs.app.name}. I can forward your Fediverse feed to this room.</p>
-		<p>Start by posting a <code>!reg &lt;FediverseServerUrl&gt;</code> message where <code>&lt;FediverseServerUrl&gt;</code> is the URL of your fediverse instance.</p>
-		<p>You can delete all your data anytime by posting a <code>!stop</code> message.</p>
-	`));
+    const helpMessage = `
+    <p>Hello! I am ${configs.app.name}. I can forward your Fediverse feed to this room.</p>
+    <p>Start by posting a <code>!reg &lt;FediverseServerUrl&gt;</code> message where <code>&lt;FediverseServerUrl&gt;</code> is the URL of your fediverse instance.</p>
+    <p>You can delete all your data anytime by posting a <code>!stop</code> message.</p>
+`;
+
+    matrix.onEvent('room.join', () => Promise.resolve(helpMessage));
 
     matrix.onEvent('room.leave', async (roomId: RoomId) => {
         await deleteSubscription(roomId);
         return undefined;
     });
+
+    matrix.onCommand('help', () => Promise.resolve(helpMessage));
 
     matrix.onCommand('reg', async (url: string, roomId: RoomId) => {
         try {
