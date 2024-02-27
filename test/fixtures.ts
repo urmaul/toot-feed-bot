@@ -39,6 +39,7 @@ export const status: Entity.Status = {
     content: '<p>Hello world</p>',
     plain_content: 'Hello world',
     created_at: '2022-11-30T09:26:01.000Z',
+    edited_at: null,
     emojis: [],
     replies_count: 0,
     reblogs_count: 0,
@@ -68,6 +69,5 @@ export const emptyNotification: Entity.Notification = {
     id: '',
     type: '',
     status: undefined,
-    emoji: undefined,
     target: undefined
 }
