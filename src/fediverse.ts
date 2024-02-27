@@ -1,6 +1,7 @@
 import generator, { detector, Mastodon, MegalodonInterface, OAuth, Pleroma, WebSocketInterface } from 'megalodon';
 import { InstanceRef, SNS } from './types';
 import { extractFromError } from './error';
+import { logger } from './logger';
 
 export interface FediverseConfig {
     ref: InstanceRef;
@@ -36,15 +37,16 @@ export function initStreamingClient(config: InstanceRef, accessToken: string): W
 }
 
 export async function detectSNS(hostname: string): Promise<SNS> {
-    try {
-        return detector(`https://${hostname}`);
-    } catch (error) {
-        // Fallback to mastodon as the most supported API
-        return Promise.resolve('mastodon');
-    }
+    return detector(`https://${hostname}`)
+        .catch(error => {
+            logger.debug(`Failed detecting SNS for ${hostname}: ${error}`);
+            // Fallback to mastodon as the most supported API
+            return 'mastodon';
+        });
 }
 
 export async function createFediverseApp(url: URL, botAppName: string): Promise<FediverseConfig> {
+    logger.debug(`Creating fediverse app for ${url.hostname}...`);
     const sns = await detectSNS(url.hostname);
     const regClient = generator(sns, `https://${url.hostname}`);
     const appData: OAuth.AppData = await regClient.createApp(botAppName, {

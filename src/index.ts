@@ -106,6 +106,7 @@ async function run() {
                 return `Error: Engine ${fediverse.config.ref.sns} of ${fediverse.config.ref.hostname} not supported.`;
 
             } catch (error) {
+                logger.error(`Failed getting a fediverse client for ${urlObject}: ${error}`);
                 return 'Error: Could not connect to the fediverse server';
             }
 
