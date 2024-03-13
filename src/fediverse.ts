@@ -1,4 +1,4 @@
-import generator, { detector, Mastodon, MegalodonInterface, OAuth, Pleroma, WebSocketInterface } from 'megalodon';
+import generator, { detector, Mastodon, MegalodonInterface, OAuth, Pleroma } from 'megalodon';
 import { InstanceRef, SNS } from './types';
 import { extractFromError } from './error';
 import { logger } from './logger';
@@ -29,11 +29,6 @@ export function isPleroma(client: SourceClient<MegalodonInterface>): client is S
 
 export function initSubscriptionClient(config: InstanceRef, accessToken: string): MegalodonInterface {
     return generator(config.sns, `https://${config.hostname}`, accessToken);
-}
-
-export function initStreamingClient(config: InstanceRef, accessToken: string): WebSocketInterface {
-    const streamingClient = generator(config.sns, `wss://${config.hostname}`, accessToken);
-    return streamingClient.userSocket();
 }
 
 export async function detectSNS(hostname: string): Promise<SNS> {
