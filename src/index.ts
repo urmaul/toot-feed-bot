@@ -1,6 +1,6 @@
 'use strict';
 
-import { createFediverseApp, extractResponseError, initFediverseClient, initStreamingClient, initSubscriptionClient, isMastodon, isPleroma, SourceClient } from './fediverse';
+import { createFediverseApp, extractResponseError, initFediverseClient, initSubscriptionClient, isMastodon, isPleroma, SourceClient } from './fediverse';
 import { initMatrixBot } from './matrix';
 import { logger } from './logger';
 import loadConfigs from './config';
@@ -270,9 +270,9 @@ async function run() {
                 }
             };
 
-            const startStreamingClient = () => {
+            const startStreamingClient = async () => {
                 try {
-                    const stream = initStreamingClient(subscription.instanceRef, subscription.accessToken);
+                    const stream = await subscriptionCient.userStreaming();
                     ongoing.set(subscription.roomId.value, stream);
 	
                     stream.on('connect', () => logger.debug(`Stream connected on ${subscription.roomId.value}`));
@@ -303,7 +303,7 @@ async function run() {
                 await reloadNotifications();
             }
             if (subscription.instanceRef.sns == 'mastodon' && !backoff.instanceBlocked(subscription.instanceRef)) {
-                startStreamingClient();
+                await startStreamingClient();
             }
         }
     }

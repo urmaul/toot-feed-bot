@@ -31,11 +31,6 @@ export function initSubscriptionClient(config: InstanceRef, accessToken: string)
     return generator(config.sns, `https://${config.hostname}`, accessToken);
 }
 
-export function initStreamingClient(config: InstanceRef, accessToken: string): WebSocketInterface {
-    const streamingClient = generator(config.sns, `wss://${config.hostname}`, accessToken);
-    return streamingClient.userSocket();
-}
-
 export async function detectSNS(hostname: string): Promise<SNS> {
     return detector(`https://${hostname}`)
         .catch(error => {
