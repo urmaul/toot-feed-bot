@@ -1,4 +1,4 @@
-import generator, { detector, Mastodon, MegalodonInterface, OAuth, Pleroma, WebSocketInterface } from 'megalodon';
+import generator, { detector, Mastodon, MegalodonInterface, OAuth, Pleroma } from 'megalodon';
 import { InstanceRef, SNS } from './types';
 import { extractFromError } from './error';
 import { logger } from './logger';
