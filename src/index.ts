@@ -288,7 +288,7 @@ async function run() {
                         logger.info(`Stream closed on ${subscription.roomId.value}`);
                         stopOngoingStream(subscription.roomId);
                     });
-                    stream.on('parser-error', (err: Error) => logger.warn(`Stream parser error on ${subscription.roomId.value}`, err.message));
+                    stream.on('parser-error', (err: Error) => logger.debug(`Stream parser error on ${subscription.roomId.value}`, err.message));
                 } catch (error) {
                     logger.error(`${subscription.roomId.value}: Error during streaming client initialization`, extractStringFromError(error, 'message') ?? error);
                     ongoing.delete(subscription.roomId.value);
