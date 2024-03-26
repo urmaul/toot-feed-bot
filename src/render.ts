@@ -5,7 +5,7 @@ import { Entity } from 'megalodon';
 const typeIcons = {'image': '🖼', 'video': '🎞️', 'gifv': '🎞️'};
 
 export function renderStatus(status: Entity.Status, titleTemplate = '{}'): string {
-    const statusUrl: string = status.url !== null ? status.url : (status.reblog?.url ? status.reblog.url : status.uri);
+    const statusUrl: string = status.url || status.reblog?.url || status.uri;
 
     const name = `<b>${accountName(status.account)}` + (status.reblog ? ` ♻️ ${accountName(status.reblog.account)}` : '') + '</b>';
     const title = summary(
