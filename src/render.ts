@@ -45,7 +45,8 @@ function renderStatusContent(status: Entity.Status): string {
 export function unlinkMentions(content: string): string {
     const html = parse(content);
     html
-        .querySelectorAll('a[rel="tag"],a.mention,a.hashtag')
+        .querySelectorAll('a')
+        .filter((el) => el.innerText.startsWith('@') || el.innerText.startsWith('#'))
         .forEach((el) => el.replaceWith(`<em>${el.innerHTML}</em>`));
 
     return html.outerHTML;
