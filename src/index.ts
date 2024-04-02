@@ -54,9 +54,9 @@ async function run() {
             if (fediverseConfig !== undefined) {
                 try {
                     const subscriptionCient = initSubscriptionClient(subscription.instanceRef, subscription.accessToken);
-                    subscriptionCient.revokeToken(fediverseConfig.clientId, fediverseConfig.clientSecret, subscription.accessToken);
+                    await subscriptionCient.revokeToken(fediverseConfig.clientId, fediverseConfig.clientSecret, subscription.accessToken);
                 } catch (error) {
-                    logger.warn('Error while revoking a token', error)
+                    logger.warn('Error while revoking a token:', extractResponseError(error) ?? `${error}`)
                 }
             }
         }
