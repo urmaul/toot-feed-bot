@@ -39,7 +39,7 @@
     "@types/node": "^20.14.2",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^6.21.0",
-    "chai": "^4.3.10",
+    "chai": "^5.1.1",
     "dotenv": "^16.4.5",
     "eslint": "^8.57.0",
     "mocha": "^10.4.0",
