@@ -48,7 +48,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@keyv/sqlite": "^3.6.7",
+    "@keyv/sqlite": "^4.0.0",
     "@tsed/logger": "^6.7.5",
     "crypto-js": "^4.2.0",
     "env-var": "^7.5.0",
