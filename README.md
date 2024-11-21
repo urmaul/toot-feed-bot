@@ -1,3 +1,5 @@
+⚠️ Repository moved to [https://codeberg.org/urmaul/toot-feed-bot](https://codeberg.org/urmaul/toot-feed-bot)
+
 # TootFeedBot
 
 A bot that forwards toots from your Fediverse feed to your matrix inbox. Supports Mastodon and Pleroma.
